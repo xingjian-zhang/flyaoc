@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.venv/
+
+# Data files (downloaded separately)
+corpus/data/
+
+# Agent caches (generated at runtime)
+corpus_cache/
+ontology_indices/
+outputs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Results
+results/
+*.log
+
+# ENV
+.env
+
+traces/
+
+# Presentation slides
+slides/
+
+# Large ontology files (download from source if needed)
+ontologies/go.owl
+
+# Local/generated files
+.serena/
+ontologies/go_creation_distribution.png
+ontologies/go_latest_10pct.txt

@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drosophila-benchmark-agent-output",
+  "title": "Drosophila Agent Benchmark Output Schema",
+  "description": "Schema for agent outputs on gene annotation tasks.",
+  "type": "object",
+  "required": ["gene_id", "gene_symbol", "task1_function", "task2_expression", "task3_synonyms"],
+  "properties": {
+    "gene_id": {
+      "type": "string",
+      "pattern": "^FBgn[0-9]{7}$",
+      "description": "FlyBase gene ID (provided in input)"
+    },
+    "gene_symbol": {
+      "type": "string",
+      "description": "Gene symbol (provided in input)"
+    },
+    "task1_function": {
+      "type": "array",
+      "description": "GO annotations ordered by confidence (index 0 = most confident). Ordering is used for recall@k evaluation.",
+      "items": { "$ref": "#/$defs/GOAnnotation" }
+    },
+    "task2_expression": {
+      "type": "array",
+      "description": "Expression records ordered by confidence (index 0 = most confident). Ordering is used for recall@k evaluation.",
+      "items": { "$ref": "#/$defs/ExpressionRecord" }
+    },
+    "task3_synonyms": {
+      "$ref": "#/$defs/Synonyms"
+    }
+  },
+  "$defs": {
+    "GOAnnotation": {
+      "type": "object",
+      "description": "Either go_id (when suitable term exists) or description (when no suitable term exists), not both.",
+      "oneOf": [
+        {
+          "required": ["go_id", "qualifier", "aspect"],
+          "properties": {
+            "go_id": {
+              "type": "string",
+              "pattern": "^GO:[0-9]{7}$",
+              "description": "GO term ID when a suitable term exists in the ontology"
+            },
+            "description": false
+          }
+        },
+        {
+          "required": ["description", "qualifier", "aspect"],
+          "properties": {
+            "description": {
+              "type": "string",
+              "maxLength": 100,
+              "description": "Proposed GO term name (short noun phrase, 2-6 words) when no suitable term exists. Must be searchable - another person should be able to find the correct term using this description. Example: 'compound eye morphogenesis'"
+            },
+            "go_id": false
+          }
+        }
+      ],
+      "properties": {
+        "go_id": {
+          "type": "string",
+          "pattern": "^GO:[0-9]{7}$"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "qualifier": {
+          "type": "string",
+          "enum": ["located_in", "part_of", "enables", "contributes_to", "involved_in", "acts_upstream_of", "acts_upstream_of_positive_effect", "acts_upstream_of_negative_effect", "acts_upstream_of_or_within", "acts_upstream_of_or_within_positive_effect", "acts_upstream_of_or_within_negative_effect", "is_active_in", "colocalizes_with"]
+        },
+        "is_negated": {
+          "type": "boolean",
+          "default": false
+        },
+        "aspect": {
+          "type": "string",
+          "enum": ["P", "F", "C"]
+        },
+        "evidence": { "$ref": "#/$defs/Evidence" }
+      }
+    },
+    "ExpressionRecord": {
+      "type": "object",
+      "required": ["expression_type"],
+      "properties": {
+        "expression_type": {
+          "type": "string",
+          "enum": ["polypeptide", "transcript"]
+        },
+        "anatomy_id": {
+          "type": ["string", "null"],
+          "pattern": "^FBbt:[0-9]{8}$"
+        },
+        "stage_id": {
+          "type": ["string", "null"],
+          "pattern": "^FBdv:[0-9]{8}$"
+        },
+        "evidence": { "$ref": "#/$defs/Evidence" }
+      }
+    },
+    "Synonyms": {
+      "type": "object",
+      "required": ["fullname_synonyms", "symbol_synonyms"],
+      "properties": {
+        "fullname_synonyms": {
+          "type": "array",
+          "description": "Full name synonyms ordered by confidence (index 0 = most confident). Ordering is used for recall@k evaluation.",
+          "items": { "type": "string" }
+        },
+        "symbol_synonyms": {
+          "type": "array",
+          "description": "Symbol synonyms ordered by confidence (index 0 = most confident). Ordering is used for recall@k evaluation.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "Evidence": {
+      "type": "object",
+      "properties": {
+        "pmcid": {
+          "type": "string",
+          "pattern": "^PMC[0-9]+$"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    }
+  }
+}

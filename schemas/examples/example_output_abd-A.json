@@ -1,0 +1,84 @@
+{
+  "gene_id": "FBgn0000014",
+  "gene_symbol": "abd-A",
+  "task1_function": [
+    {
+      "go_id": "GO:0005634",
+      "qualifier": "located_in",
+      "aspect": "C",
+      "evidence": {
+        "pmcid": "PMC2345678",
+        "text": "Immunofluorescence analysis revealed that abd-A protein is localized predominantly in the nucleus of embryonic epidermal cells."
+      }
+    },
+    {
+      "go_id": "GO:0003700",
+      "qualifier": "enables",
+      "aspect": "F",
+      "evidence": {
+        "pmcid": "PMC3456789",
+        "text": "Electrophoretic mobility shift assays demonstrated that abd-A protein binds directly to the regulatory regions of its target genes."
+      }
+    },
+    {
+      "go_id": "GO:0009952",
+      "qualifier": "involved_in",
+      "aspect": "P",
+      "evidence": {
+        "pmcid": "PMC4567890",
+        "text": "Loss-of-function mutations in abd-A result in the transformation of abdominal segments toward more anterior identities."
+      }
+    },
+    {
+      "go_id": "GO:0006355",
+      "qualifier": "involved_in",
+      "aspect": "P"
+    },
+    {
+      "go_id": "GO:0043565",
+      "qualifier": "enables",
+      "aspect": "F"
+    }
+  ],
+  "task2_expression": [
+    {
+      "expression_type": "polypeptide",
+      "anatomy_id": "FBbt:00000146",
+      "stage_id": "FBdv:00005327",
+      "evidence": {
+        "pmcid": "PMC5678901",
+        "text": "Anti-abd-A antibody staining revealed strong expression in parasegments 8 through 13 during stage 12."
+      }
+    },
+    {
+      "expression_type": "polypeptide",
+      "anatomy_id": "FBbt:00000130",
+      "stage_id": "FBdv:00005327"
+    },
+    {
+      "expression_type": "transcript",
+      "anatomy_id": "FBbt:00001663",
+      "stage_id": "FBdv:00005336"
+    }
+  ],
+  "task3_synonyms": {
+    "fullname_synonyms": [
+      "Abdominal A",
+      "Abdominal-A",
+      "Contrabithoraxoid",
+      "Hyperabdominal",
+      "Ultraabdominal"
+    ],
+    "symbol_synonyms": [
+      "Abd-A",
+      "ABD-A",
+      "abdA",
+      "AbdA",
+      "iab-2",
+      "iab-3",
+      "iab-4",
+      "Cbxd",
+      "CG10325"
+    ]
+  }
+}

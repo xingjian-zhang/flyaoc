@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drosophila-benchmark-agent-input",
+  "title": "Drosophila Agent Benchmark Input Schema",
+  "description": "Input provided to agents for gene annotation tasks",
+  "type": "object",
+  "required": ["gene_id", "gene_symbol", "summary"],
+  "properties": {
+    "gene_id": {
+      "type": "string",
+      "pattern": "^FBgn[0-9]{7}$",
+      "description": "FlyBase gene ID"
+    },
+    "gene_symbol": {
+      "type": "string",
+      "description": "Official gene symbol"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Expert-written gene summary from FlyBase Gene Snapshot"
+    }
+  }
+}
