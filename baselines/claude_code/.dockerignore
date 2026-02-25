@@ -1,0 +1,3 @@
+papers_split/
+*.pyc
+__pycache__/
