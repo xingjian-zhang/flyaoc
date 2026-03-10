@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Core corpus search functionality using BM25 over the HuggingFace literature corpus."""
 
 import json
@@ -5,6 +7,8 @@ import os
 import pickle
 from pathlib import Path
 from typing import Any, Iterable
+from functools import lru_cache
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -12,8 +16,12 @@ import torch
 from datasets import load_dataset
 from rank_bm25 import BM25Okapi
 
-from __future__ import annotations
 from typing import Dict, Any, Optional
+
+import numpy as np
+import torch
+import faiss
+from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification
 
 # Cache directory for preprocessed data
 CACHE_DIR = Path(__file__).parent.parent.parent / "corpus_cache"
@@ -71,13 +79,11 @@ class CorpusIndex:
                 with open(corpus_path) as f:
                     self.corpus = json.load(f)
                 self._loaded = True
-                print(f"Loaded cached index with {len(self.corpus)} papers")
                 return
             except Exception as e:
-                print(f"Cache load failed: {e}, rebuilding...")
+                pass
 
         # Load from HuggingFace
-        print("Loading corpus from HuggingFace...")
         dataset = load_dataset("jimmyzxj/drosophila-literature-corpus", split="train")
 
         # Extract metadata and build index
@@ -100,7 +106,6 @@ class CorpusIndex:
             texts_for_index.append(searchable_text)
 
         # Tokenize and build BM25 index
-        print("Building BM25 index...")
         self.tokenized_docs = [self._tokenize(text) for text in texts_for_index]
         self.bm25 = BM25Okapi(self.tokenized_docs)
 
@@ -112,7 +117,6 @@ class CorpusIndex:
             json.dump(self.corpus, f)
 
         self._loaded = True
-        print(f"Built index with {len(self.corpus)} papers")
 
     def _check_query_in_text(self, text: str, query: str) -> bool:
         """Check if query (as phrase or individual words) appears in text."""
@@ -342,70 +346,33 @@ def search_corpus_medcpt_core(
     query: str,
     retrieve_k: int = 50,
     top_n: int = 20,
+    use_reranker: bool = False,
 ) -> list[dict]:
-    """
-    Semantic search using MedCPT embeddings + FAISS retrieval + cross-encoder rerank.
-
-    Args:
-        query: query string
-        retrieve_k: initial FAISS retrieval size
-        top_n: final top-N to return after reranking
-    """
-    from . import rerank_medcpt as rr
-
-    index_dir = str(MEDCPT_DIR)
-    meta_path = os.path.join(index_dir, "metadata.parquet")
-    if not os.path.exists(meta_path):
+    try:
+        res = get_medcpt_resources(load_reranker=use_reranker)
+    except Exception:
         return []
 
-    meta = pd.read_parquet(meta_path)
-
-    if "text" not in meta.columns:
-        title_col = meta["title"] if "title" in meta.columns else pd.Series("", index=meta.index)
-        abstract_col = meta["abstract"] if "abstract" in meta.columns else pd.Series("", index=meta.index)
-        meta["text"] = (title_col.fillna("") + "\n\n" + abstract_col.fillna("")).str.strip()
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # 1) encode query
     try:
-        q_vec = rr.encode_query(
+        q_vec = encode_query_cached(
             query,
-            model_name="ncbi/MedCPT-Query-Encoder",
-            device=device,
-            fp16=False,
+            tokenizer=res.query_tokenizer,
+            model=res.query_model,
+            device=res.device,
             normalize=True,
         )
     except Exception:
         return []
 
-    # 2) retrieve with FAISS or brute-force fallback
-    index_path = os.path.join(index_dir, "faiss.index")
-    if os.path.exists(index_path):
-        index = rr.load_faiss_index(index_path)
-        emb_scores, emb_ids = rr.retrieve_faiss(index, q_vec, retrieve_k)
+    if res.faiss_index is not None:
+        emb_scores, emb_ids = retrieve_faiss(res.faiss_index, q_vec, retrieve_k)
     else:
-        memmap_path = os.path.join(index_dir, "embeddings.memmap")
-        if not os.path.exists(memmap_path):
+        if res.memmap_path is None or res.dim is None:
             return []
-
-        n = len(meta)
-        dim = None
-        try:
-            import json as _json
-            with open(os.path.join(index_dir, "checkpoint.json"), "r") as f:
-                ck = _json.load(f)
-            dim = int(ck.get("dim")) if ck.get("dim") else None
-        except Exception:
-            dim = None
-
-        if dim is None:
-            return []
-
-        emb_scores, emb_ids = rr.retrieve_bruteforce_memmap(
-            memmap_path,
-            n=n,
-            dim=dim,
+        emb_scores, emb_ids = retrieve_bruteforce_memmap(
+            res.memmap_path,
+            n=res.n,
+            dim=res.dim,
             q_vec=q_vec,
             k=retrieve_k,
         )
@@ -417,43 +384,226 @@ def search_corpus_medcpt_core(
     if len(emb_ids) == 0:
         return []
 
-    cand = meta.iloc[emb_ids].copy().reset_index(drop=True)
+    cand = res.meta.iloc[emb_ids].copy().reset_index(drop=True)
     cand["emb_score"] = emb_scores
-    texts = cand["text"].astype(str).tolist()
 
-    # 3) rerank with cross-encoder
-    try:
-        rr_scores = rr.rerank_cross_encoder(
-            query=query,
-            texts=texts,
-            model_name="cross-encoder/ms-marco-MiniLM-L-6-v2",
-            device=device,
-            batch_size=16,
-            fp16=False,
-        )
-    except Exception:
-        rr_scores = np.array(cand["emb_score"].astype(float))
+    if use_reranker and res.rerank_model is not None:
+        texts = cand["text"].astype(str).tolist()
+        try:
+            rr_scores = rerank_cross_encoder_cached(
+                query=query,
+                texts=texts,
+                tokenizer=res.rerank_tokenizer,
+                model=res.rerank_model,
+                device=res.device,
+                batch_size=16,
+            )
+            cand["rerank_score"] = rr_scores
+            cand = cand.sort_values("rerank_score", ascending=False).head(top_n)
+            score_col = "rerank_score"
+        except Exception:
+            cand = cand.sort_values("emb_score", ascending=False).head(top_n)
+            score_col = "emb_score"
+    else:
+        cand = cand.sort_values("emb_score", ascending=False).head(top_n)
+        score_col = "emb_score"
 
-    cand["rerank_score"] = rr_scores
-    cand = cand.sort_values("rerank_score", ascending=False).head(top_n)
-
-    out: list[dict] = []
+    out = []
     for _, row in cand.iterrows():
-        pmcid = str(row.get("pmcid", "")).strip()
-        title = row.get("title", "")
         abstract = row.get("abstract", "")
-        score = float(row.get("rerank_score", row.get("emb_score", 0.0)))
-
         out.append(
             {
-                "pmcid": pmcid,
-                "title": title,
+                "pmcid": str(row.get("pmcid", "")).strip(),
+                "title": row.get("title", ""),
                 "abstract": (abstract[:500] + "…")
                 if isinstance(abstract, str) and len(abstract) > 500
                 else abstract,
-                "relevance_score": round(score, 4),
-                "gene_in_title": query.lower() in str(title).lower(),
+                "relevance_score": round(float(row.get(score_col, 0.0)), 4),
+                "gene_in_title": query.lower() in str(row.get("title", "")).lower(),
             }
         )
-
     return out
+
+MEDCPT_DIR = Path("path/to/medcpt_index")
+
+@dataclass
+class MedCPTResources:
+    meta: pd.DataFrame
+    faiss_index: Any | None
+    memmap_path: str | None
+    n: int
+    dim: int | None
+    query_tokenizer: Any
+    query_model: Any
+    rerank_tokenizer: Any | None
+    rerank_model: Any | None
+    device: torch.device
+
+_MEDCPT_RESOURCES: MedCPTResources | None = None
+
+
+def get_medcpt_resources(load_reranker: bool = False) -> MedCPTResources:
+    global _MEDCPT_RESOURCES
+    if _MEDCPT_RESOURCES is not None:
+        # optionally lazy-load reranker later
+        if load_reranker and _MEDCPT_RESOURCES.rerank_model is None:
+            _MEDCPT_RESOURCES.rerank_tokenizer = AutoTokenizer.from_pretrained(
+                "cross-encoder/ms-marco-MiniLM-L-6-v2"
+            )
+            _MEDCPT_RESOURCES.rerank_model = (
+                AutoModelForSequenceClassification.from_pretrained(
+                    "cross-encoder/ms-marco-MiniLM-L-6-v2"
+                ).to(_MEDCPT_RESOURCES.device)
+            )
+            _MEDCPT_RESOURCES.rerank_model.eval()
+        return _MEDCPT_RESOURCES
+
+    index_dir = str(MEDCPT_DIR)
+    meta_path = os.path.join(index_dir, "metadata.parquet")
+    if not os.path.exists(meta_path):
+        raise FileNotFoundError(f"Missing metadata parquet: {meta_path}")
+
+    meta = pd.read_parquet(meta_path)
+
+    if "text" not in meta.columns:
+        title_col = meta["title"] if "title" in meta.columns else pd.Series("", index=meta.index)
+        abstract_col = meta["abstract"] if "abstract" in meta.columns else pd.Series("", index=meta.index)
+        meta["text"] = (title_col.fillna("") + "\n\n" + abstract_col.fillna("")).str.strip()
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    query_tokenizer = AutoTokenizer.from_pretrained("ncbi/MedCPT-Query-Encoder")
+    query_model = AutoModel.from_pretrained("ncbi/MedCPT-Query-Encoder").to(device)
+    query_model.eval()
+
+    faiss_index = None
+    index_path = os.path.join(index_dir, "faiss.index")
+    if os.path.exists(index_path):
+        faiss_index = faiss.read_index(index_path)
+
+    memmap_path = None
+    dim = None
+    n = len(meta)
+
+    candidate_memmap = os.path.join(index_dir, "embeddings.memmap")
+    if os.path.exists(candidate_memmap):
+        memmap_path = candidate_memmap
+        try:
+            with open(os.path.join(index_dir, "checkpoint.json"), "r") as f:
+                ck = json.load(f)
+            dim = int(ck["dim"])
+        except Exception:
+            dim = None
+
+    rerank_tokenizer = None
+    rerank_model = None
+    if load_reranker:
+        rerank_tokenizer = AutoTokenizer.from_pretrained(
+            "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        )
+        rerank_model = AutoModelForSequenceClassification.from_pretrained(
+            "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        ).to(device)
+        rerank_model.eval()
+
+    _MEDCPT_RESOURCES = MedCPTResources(
+        meta=meta,
+        faiss_index=faiss_index,
+        memmap_path=memmap_path,
+        n=n,
+        dim=dim,
+        query_tokenizer=query_tokenizer,
+        query_model=query_model,
+        rerank_tokenizer=rerank_tokenizer,
+        rerank_model=rerank_model,
+        device=device,
+    )
+    return _MEDCPT_RESOURCES
+
+def encode_query_cached(
+    query: str,
+    tokenizer,
+    model,
+    device: torch.device,
+    normalize: bool = True,
+):
+    inputs = tokenizer(
+        query,
+        return_tensors="pt",
+        truncation=True,
+        padding=True,
+        max_length=512,
+    ).to(device)
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+        emb = outputs.last_hidden_state.mean(dim=1)
+
+    emb = emb.cpu().numpy().astype("float32")
+
+    if normalize:
+        norm = np.linalg.norm(emb, axis=1, keepdims=True)
+        norm[norm == 0] = 1.0
+        emb = emb / norm
+
+    return emb
+
+def load_faiss_index(path: str):
+    return faiss.read_index(path)
+
+def retrieve_faiss(index, q_vec, k: int):
+    scores, ids = index.search(q_vec, k)
+    return scores[0], ids[0]
+
+def retrieve_bruteforce_memmap(
+    memmap_path: str,
+    n: int,
+    dim: int,
+    q_vec,
+    k: int,
+):
+    embeddings = np.memmap(
+        memmap_path,
+        dtype="float32",
+        mode="r",
+        shape=(n, dim),
+    )
+
+    sims = embeddings @ q_vec.T
+    sims = sims.squeeze()
+
+    top_ids = np.argpartition(-sims, k)[:k]
+    top_scores = sims[top_ids]
+
+    order = np.argsort(-top_scores)
+
+    return top_scores[order], top_ids[order]
+
+def rerank_cross_encoder_cached(
+    query: str,
+    texts: list[str],
+    tokenizer,
+    model,
+    device: torch.device,
+    batch_size: int = 16,
+):
+    scores = []
+
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i : i + batch_size]
+        pairs = [[query, t] for t in batch]
+
+        inputs = tokenizer(
+            pairs,
+            return_tensors="pt",
+            truncation=True,
+            padding=True,
+            max_length=512,
+        ).to(device)
+
+        with torch.no_grad():
+            logits = model(**inputs).logits.squeeze(-1)
+
+        scores.extend(logits.detach().cpu().numpy())
+
+    return np.array(scores, dtype="float32")
