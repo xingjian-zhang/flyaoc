@@ -12,7 +12,7 @@ __all__ = ["CorpusIndex", "get_corpus_index", "search_corpus", "CorpusSearchTool
 
 
 @tool
-def search_corpus(query: str, limit: int = 20) -> list[dict]:
+def search_corpus(query: str, limit: int = 20, method="bm25_then_medcpt") -> list[dict]:
     """Search the Drosophila literature corpus for papers matching a query.
 
     Use this tool to find scientific papers that discuss a specific gene,
@@ -22,6 +22,7 @@ def search_corpus(query: str, limit: int = 20) -> list[dict]:
         query: Search query - can be a gene symbol (e.g., "abd-A"),
                keyword (e.g., "transcription factor"), or phrase
         limit: Maximum number of results to return (default 20)
+        method: Method to use for search ("bm25_then_medcpt", "wrrf")
 
     Returns:
         List of matching papers with:
@@ -30,7 +31,7 @@ def search_corpus(query: str, limit: int = 20) -> list[dict]:
         - abstract: Paper abstract (truncated to 500 chars)
         - relevance_score: BM25 relevance score
     """
-    return search_corpus_core(query, limit=limit)
+    return search_corpus_core(query, limit=limit, method=method)
 
 
 # Alias for LangChain integration
