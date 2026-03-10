@@ -34,7 +34,13 @@ def main() -> None:
 
     # Default directories based on mode
     multi_agent = getattr(args, "multi_agent", False)
-    default_output_dir = Path("outputs/multi_agent" if multi_agent else "outputs/single_agent")
+    oracle_retrieval = getattr(args, "oracle_retrieval", False)
+    if oracle_retrieval:
+        default_output_dir = Path("outputs/oracle_retrieval")
+    elif multi_agent:
+        default_output_dir = Path("outputs/multi_agent")
+    else:
+        default_output_dir = Path("outputs/single_agent")
     trace_dir = args.trace_dir  # None by default; trace is embedded in output JSON
 
     # Handle single gene mode
@@ -53,6 +59,7 @@ def main() -> None:
             args.hide_terms,
             args.multi_agent,
             getattr(args, "no_literature", False),
+            oracle_retrieval,
         )
 
         default_output_dir.mkdir(parents=True, exist_ok=True)
@@ -82,6 +89,7 @@ def main() -> None:
             args.multi_agent,
             args.workers,
             getattr(args, "no_literature", False),
+            oracle_retrieval,
         )
 
     # Handle JSON input mode
@@ -120,6 +128,7 @@ def main() -> None:
             args.hide_terms,
             args.multi_agent,
             args.workers,
+            oracle_retrieval=oracle_retrieval,
         )
 
 

@@ -137,4 +137,11 @@ def create_parser() -> argparse.ArgumentParser:
         help="Memorization baseline: no literature access (tests LLM prior knowledge)",
     )
 
+    # Oracle retrieval baseline
+    parser.add_argument(
+        "--oracle-retrieval",
+        action="store_true",
+        help="Oracle retrieval baseline: provide ground truth papers instead of BM25 search (ceiling performance)",
+    )
+
     return parser

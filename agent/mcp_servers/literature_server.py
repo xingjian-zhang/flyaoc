@@ -27,6 +27,11 @@ _papers_read = 0
 # Hide get_paper_text tool when using subagent mode (set via HIDE_GET_PAPER_TEXT env var)
 _hide_get_paper_text = os.environ.get("HIDE_GET_PAPER_TEXT", "") == "1"
 
+# Oracle retrieval mode: provide ground truth papers instead of BM25 search
+# ORACLE_PMCIDS should be a JSON-encoded list of PMCIDs
+_oracle_pmcids_raw = os.environ.get("ORACLE_PMCIDS", "")
+_oracle_pmcids: list[str] = json.loads(_oracle_pmcids_raw) if _oracle_pmcids_raw else []
+
 
 @mcp.tool()
 def search_corpus(query: str, limit: int = 20) -> str:
@@ -49,6 +54,23 @@ def search_corpus(query: str, limit: int = 20) -> str:
         - gene_in_title: True if query appears in title (HIGH relevance signal -
           papers with gene in title are typically focused studies)
     """
+    if _oracle_pmcids:
+        # Oracle mode: return the ground truth papers directly
+        results = []
+        for pmcid in _oracle_pmcids[:limit]:
+            paper = get_paper_text_core(pmcid)
+            if paper and not paper.get("error"):
+                results.append(
+                    {
+                        "pmcid": pmcid,
+                        "title": paper.get("title", ""),
+                        "abstract": (paper.get("abstract", "") or "")[:500],
+                        "relevance_score": 100.0,
+                        "gene_in_title": True,
+                    }
+                )
+        return json.dumps(results, indent=2)
+
     results = search_corpus_core(query, limit=limit)
     return json.dumps(results, indent=2)
 
