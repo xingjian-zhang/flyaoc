@@ -421,17 +421,11 @@ async def run_agent_mcp(
 
         oracle_pmcids = get_oracle_pmcids(gene_id)
         trace.log_info(
-            f"Oracle retrieval enabled: {len(oracle_pmcids)} ground truth papers"
+            f"Oracle retrieval enabled: {len(oracle_pmcids)} ground truth papers "
+            f"(+ BM25 backfill to {budget_config.max_papers} total)"
         )
         if oracle_pmcids:
             trace.log_info(f"Oracle PMCIDs: {oracle_pmcids}")
-        # Override max_papers to match oracle paper count so agent reads all of them
-        if oracle_pmcids and len(oracle_pmcids) > budget_config.max_papers:
-            budget_config = BudgetConfig(
-                max_turns=budget_config.max_turns,
-                max_papers=len(oracle_pmcids),
-                max_cost_usd=budget_config.max_cost_usd,
-            )
 
     hooks = BudgetControlHooks(budget_config, model=model_name, trace=trace)
 

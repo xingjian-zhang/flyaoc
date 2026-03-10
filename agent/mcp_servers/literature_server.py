@@ -55,9 +55,12 @@ def search_corpus(query: str, limit: int = 20) -> str:
           papers with gene in title are typically focused studies)
     """
     if _oracle_pmcids:
-        # Oracle mode: return the ground truth papers directly
+        # Oracle mode: prioritize ground truth papers, then backfill with BM25
         results = []
-        for pmcid in _oracle_pmcids[:limit]:
+        oracle_set = set(_oracle_pmcids)
+
+        # First, add all oracle papers (guaranteed to be included)
+        for pmcid in _oracle_pmcids:
             paper = get_paper_text_core(pmcid)
             if paper and not paper.get("error"):
                 results.append(
@@ -69,6 +72,16 @@ def search_corpus(query: str, limit: int = 20) -> str:
                         "gene_in_title": True,
                     }
                 )
+
+        # Then backfill remaining slots with BM25 results (excluding oracle papers)
+        if len(results) < limit:
+            bm25_results = search_corpus_core(query, limit=limit + len(oracle_set))
+            for bm25_paper in bm25_results:
+                if len(results) >= limit:
+                    break
+                if bm25_paper["pmcid"] not in oracle_set:
+                    results.append(bm25_paper)
+
         return json.dumps(results, indent=2)
 
     results = search_corpus_core(query, limit=limit)
