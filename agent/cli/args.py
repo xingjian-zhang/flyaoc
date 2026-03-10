@@ -120,7 +120,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--hide-terms",
         action="store_true",
-        help="Enable GO term hiding for specificity gap benchmark (116 terms hidden)",
+        help="Enable GO term hiding for missing-term setting (120 terms hidden)",
     )
 
     # Multi-agent mode for context isolation

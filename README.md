@@ -33,10 +33,13 @@ uv run python -m agent.run_agent --gene-id FBgn0000014 --gene-symbol abd-A --max
 # Production model (default: gpt-5-mini ~$0.40/gene, gpt-5 ~$2/gene at 16 papers)
 uv run python -m agent.run_agent --gene-id FBgn0000014 --gene-symbol abd-A --model gpt-5
 
+# Memorization baseline (no literature access, tests LLM prior knowledge)
+uv run python -m agent.run_agent --gene-id FBgn0000014 --gene-symbol abd-A --no-literature
+
 # Verbose with trace output
 uv run python -m agent.run_agent --gene-id FBgn0000014 --gene-symbol abd-A -v
 
-# Specificity gap benchmark (hides 4,389 GO terms)
+# Missing-term setting (hides 120 GO terms from ontology search)
 uv run python -m agent.run_agent --gene-id FBgn0000014 --gene-symbol abd-A --hide-terms
 ```
 
@@ -46,34 +49,41 @@ Output saved to `outputs/single_agent/{gene_id}.json` (or `outputs/multi_agent/`
 
 ## Tasks
 
-Given a gene symbol, agents must extract:
+Given a gene symbol, agents must extract annotations from the literature corpus:
 
-| Task | Output | Ontology |
-|------|--------|----------|
-| 1. Gene Function | GO terms with evidence | Gene Ontology |
-| 2. Expression | Anatomy + developmental stage | FBbt, FBdv |
-| 3. Synonyms | Historical names and aliases | - |
+| Task | Guiding Question | Ontology | Corpus-Grounded | Primary Metric |
+|------|-----------------|----------|-----------------|----------------|
+| 1. Gene Function | "What does the gene do?" | Gene Ontology | 28.9% | semantic recall@20 |
+| 2. Expression | "Where and when is the gene expressed?" | FBbt, FBdv | 37.0% | semantic recall@10 |
+| 3. Synonyms | "What other names does the gene have?" | - | - | exact recall@20 |
+
+**Corpus-grounded** means the fraction of ground-truth annotations recoverable from the provided literature. Evaluation uses only these corpus-grounded annotations.
 
 See [schemas/OUTPUT_SPEC.md](schemas/OUTPUT_SPEC.md) for field specifications.
 
 ## Architecture
 
-Three agent methods:
+Four baseline architectures:
 
-**Single-Agent** (default): One agent with sequential tool use
+**Memorization**: Parametric knowledge only (no literature access)
+- `uv run python -m agent.run_agent --gene-id ... --no-literature`
+- Tests LLM prior knowledge without any tool use
+- Lower bound on agent performance
+
+**Pipeline**: Fixed parallel DAG (no feedback loop)
+- `uv run python -m agent.run_pipeline --gene-id ...`
+- Uses LangGraph with fan-out/fan-in pattern
+- Faster but no iterative refinement (~$0.10/gene at 16 papers)
+
+**Single-Agent** (default): One agent with sequential tool use and feedback loop
 - `uv run python -m agent.run_agent --gene-id ...`
 - Context grows linearly with papers read
 - OpenAI Agents SDK with MCP tool servers
 
-**Multi-Agent**: Hierarchical delegation with bounded context
+**Multi-Agent**: Hierarchical delegation with bounded context and feedback loop
 - `uv run python -m agent.run_agent --gene-id ... --multi-agent`
 - Delegates paper reading to specialized paper reader agents
 - Main agent context stays bounded regardless of paper count
-
-**Pipeline**: Fixed parallel DAG
-- `uv run python -m agent.run_pipeline --gene-id ...`
-- Uses LangGraph with fan-out/fan-in pattern
-- Faster but less flexible (~$0.10/gene at 16 papers)
 
 **MCP Servers** (`agent/mcp_servers/`):
 - `literature_server.py` - `search_corpus`, `get_paper_text`
@@ -95,20 +105,18 @@ Three agent methods:
 
 ## Evaluation
 
-Metrics: Precision, Recall, F1 against `in_corpus=True` annotations.
+Primary metric: **corpus-grounded semantic recall@k** — measures how many corpus-recoverable annotations the agent finds, using semantic similarity to match predicted terms against ground truth.
 
-**Maximum achievable recall** (ground truth includes annotations not in corpus):
-- Task 1 (GO): ~29%
-- Task 2 (Expression): ~37%
+Evaluation is restricted to `in_corpus=True` annotations (those recoverable from the literature corpus). This corpus-grounded fraction is 28.9% for GO and 37.0% for Expression, reflecting that most FlyBase annotations come from sources outside the provided corpus (e.g., high-throughput screens, direct submissions).
 
 ```bash
-uv run python -m eval.run_eval --gene-id FBgn0000014 -v  # Single gene
-uv run python -m eval.run_eval --batch -v                # All genes
+uv run python -m eval.evaluator --gene-id FBgn0000014 -v          # Single gene
+uv run python -m eval.evaluator --batch --dir outputs/single_agent -v  # All genes
 ```
 
-## Specificity Gap Benchmark
+## Missing-Term Setting
 
-Tests whether models recognize when available GO terms lack sufficient specificity. When `--hide-terms` is enabled, 4,389 GO terms are hidden from ontology search results (116 primary terms + all descendants).
+Tests whether agents recognize when no suitable GO term exists in the ontology. When `--hide-terms` is enabled, 120 GO terms are hidden from ontology search results (120 primary terms, 0 descendants added), covering ~15% of in-corpus GO annotations.
 
 **Expected behavior:** When no suitable GO term exists, output a `description` instead of `go_id`:
 ```json
@@ -117,7 +125,7 @@ Tests whether models recognize when available GO terms lack sufficient specifici
 
 **Data files:**
 - `data/ground_truth_top100_hidden.jsonl` - Ground truth with `hidden: true/false` flags
-- `data/hidden_go_terms.json` - List of hidden terms (primary + descendants)
+- `data/hidden_go_terms.json` - List of 120 hidden terms and selection statistics
 
 ## Project Structure
 

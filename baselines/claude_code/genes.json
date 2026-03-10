@@ -1,0 +1,62 @@
+[
+  {
+    "gene_id": "FBgn0011570",
+    "gene_symbol": "cpb",
+    "summary": "capping protein beta (cpb) encodes an actin-binding protein that, together with cpa, binds to the fast growing ends of actin filaments, restricting the addition or loss of actin monomers. It restricts JNK signaling, modulates Hippo signaling, maintains epithelial integrity and neuronal homeostasis, controls proliferation/apoptosis in wing imaginal discs, and promotes oogenesis.",
+    "difficulty": "hard"
+  },
+  {
+    "gene_id": "FBgn0002921",
+    "gene_symbol": "Atpalpha",
+    "summary": "Na pump alpha subunit (Atpalpha) encodes an integral membrane cation antiporter protein that utilizes ATP to shuttle Na[+] and K[+] across the plasma membrane to maintain ion homeostasis.",
+    "difficulty": "hard"
+  },
+  {
+    "gene_id": "FBgn0001319",
+    "gene_symbol": "kn",
+    "summary": "knot (kn) encodes a transcription factor required for somatic and alary muscle specification and embryonic head segmentation. In larvae, it is required for wing disc patterning and plays a key role in the lymph gland, both under normal conditions and under immune stress.",
+    "difficulty": "hard"
+  },
+  {
+    "gene_id": "FBgn0003944",
+    "gene_symbol": "Ubx",
+    "summary": "Ultrabithorax (Ubx) encodes a homeodomain transcription factor involved in cell fate decisions, cell proliferation and organ identity. Ubx mutants can show a second set of wings due to appendage transformation.",
+    "difficulty": "hard"
+  },
+  {
+    "gene_id": "FBgn0000229",
+    "gene_symbol": "bsk",
+    "summary": "basket (bsk) encodes a serine/threonine-protein kinase, a key component of JNK pathway that phosphorylates the transcription factor encoded by Jra. Its roles include regulation of cell shape and stress response.",
+    "difficulty": "hard"
+  },
+  {
+    "gene_id": "FBgn0284256",
+    "gene_symbol": "bsf",
+    "summary": "bicoid stability factor (bsf) encodes a member of the family of proteins containing the pentatricopeptide motif, an RNA binding domain. It is found in the cytoplasm, where it functions in mRNA stability and post-transcriptional control of gene expression, and in mitochondria, where it has multiple roles in gene expression. It acts at many stages of development, and is required for progression through oogenesis and viability.",
+    "difficulty": "easy"
+  },
+  {
+    "gene_id": "FBgn0002736",
+    "gene_symbol": "mago",
+    "summary": "mago nashi (mago) encodes a protein that is part of the exon junction complex, which is required for post-transcriptional processes such as pre-mRNA splicing, RNA localization and nonsense-mediated decay. It is involved in germline development, germplasm assembly and photoreceptor differentiation.",
+    "difficulty": "easy"
+  },
+  {
+    "gene_id": "FBgn0003447",
+    "gene_symbol": "sn",
+    "summary": "singed (sn) encodes a member of the fascin family of actin-binding proteins. Fascin proteins organize F-actin into parallel bundles, and are required for the formation of actin-based cellular protrusions. The bundling activity of the product of sn is regulated by phosphorylation.",
+    "difficulty": "easy"
+  },
+  {
+    "gene_id": "FBgn0038206",
+    "gene_symbol": "twf",
+    "summary": "twinfilin (twf) encodes a ubiquitously expressed actin monomer binding protein that is structurally related to the product of tsr and inhibits actin filament assembly. It is highly conserved and is present in all eukaryotes except plants. Its roles include bristle and neuronal development.",
+    "difficulty": "easy"
+  },
+  {
+    "gene_id": "FBgn0250816",
+    "gene_symbol": "AGO3",
+    "summary": "Argonaute 3 (AGO3) encodes a germline-specific Argonaute/Piwi family protein, which interacts with Piwi-interacting RNAs (piRNAs) to form effector complexes. It exhibits piRNA-guided RNA cleavage activity required for both piRNA amplification and transposon silencing, thereby securing germline development.",
+    "difficulty": "easy"
+  }
+]

@@ -48,3 +48,8 @@ ontologies/go.owl
 .serena/
 ontologies/go_creation_distribution.png
 ontologies/go_latest_10pct.txt
+
+# Claude Code baseline (generated data)
+baselines/claude_code/papers_split/
+baselines/claude_code/pypackages/
+baselines/claude_code/.credentials.json
