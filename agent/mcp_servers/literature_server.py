@@ -27,6 +27,11 @@ _papers_read = 0
 # Hide get_paper_text tool when using subagent mode (set via HIDE_GET_PAPER_TEXT env var)
 _hide_get_paper_text = os.environ.get("HIDE_GET_PAPER_TEXT", "") == "1"
 
+# Oracle retrieval mode: provide ground truth papers instead of BM25 search
+# ORACLE_PMCIDS should be a JSON-encoded list of PMCIDs
+_oracle_pmcids_raw = os.environ.get("ORACLE_PMCIDS", "")
+_oracle_pmcids: list[str] = json.loads(_oracle_pmcids_raw) if _oracle_pmcids_raw else []
+
 
 @mcp.tool()
 def search_corpus(query: str, limit: int = 20) -> str:
@@ -49,6 +54,36 @@ def search_corpus(query: str, limit: int = 20) -> str:
         - gene_in_title: True if query appears in title (HIGH relevance signal -
           papers with gene in title are typically focused studies)
     """
+    if _oracle_pmcids:
+        # Oracle mode: prioritize ground truth papers, then backfill with BM25
+        results = []
+        oracle_set = set(_oracle_pmcids)
+
+        # First, add all oracle papers (guaranteed to be included)
+        for pmcid in _oracle_pmcids:
+            paper = get_paper_text_core(pmcid)
+            if paper and not paper.get("error"):
+                results.append(
+                    {
+                        "pmcid": pmcid,
+                        "title": paper.get("title", ""),
+                        "abstract": (paper.get("abstract", "") or "")[:500],
+                        "relevance_score": 100.0,
+                        "gene_in_title": True,
+                    }
+                )
+
+        # Then backfill remaining slots with BM25 results (excluding oracle papers)
+        if len(results) < limit:
+            bm25_results = search_corpus_core(query, limit=limit + len(oracle_set))
+            for bm25_paper in bm25_results:
+                if len(results) >= limit:
+                    break
+                if bm25_paper["pmcid"] not in oracle_set:
+                    results.append(bm25_paper)
+
+        return json.dumps(results, indent=2)
+
     results = search_corpus_core(query, limit=limit)
     return json.dumps(results, indent=2)
 

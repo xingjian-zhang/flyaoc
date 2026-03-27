@@ -38,6 +38,7 @@ def get_mcp_server_params(
     max_papers: int = 0,
     multi_agent: bool = False,
     no_literature: bool = False,
+    oracle_pmcids: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Get MCP server parameters for stdio transport.
 
@@ -46,6 +47,8 @@ def get_mcp_server_params(
         max_papers: Max papers to read (0 = no limit). Passed to literature server.
         multi_agent: If True, hide get_paper_text tool (subagent handles paper reading)
         no_literature: If True, exclude literature server (memorization baseline)
+        oracle_pmcids: If provided, pass oracle PMCIDs to literature server
+            (search_corpus returns these papers instead of BM25 results)
 
     Returns:
         List of server parameter dicts for MCPServerStdio
@@ -69,6 +72,8 @@ def get_mcp_server_params(
         if multi_agent:
             # Hide get_paper_text - subagent's analyze_papers_batch handles paper reading
             literature_env["HIDE_GET_PAPER_TEXT"] = "1"
+        if oracle_pmcids:
+            literature_env["ORACLE_PMCIDS"] = json.dumps(oracle_pmcids)
 
         servers.append(
             {
@@ -303,6 +308,7 @@ async def run_agent_mcp(
     hide_terms: bool | None = None,
     multi_agent: bool | None = None,
     no_literature: bool | None = None,
+    oracle_retrieval: bool | None = None,
 ) -> AgentRunResult:
     """Run the MCP-based agent on a single gene.
 
@@ -350,6 +356,8 @@ async def run_agent_mcp(
             effective_config.features.multi_agent = multi_agent
         if no_literature is not None:
             effective_config.features.no_literature = no_literature
+        if oracle_retrieval is not None:
+            effective_config.features.oracle_retrieval = oracle_retrieval
     else:
         # Config provided - use it, but allow individual params to override
         effective_config = config
@@ -371,6 +379,8 @@ async def run_agent_mcp(
             effective_config.features.multi_agent = multi_agent
         if no_literature is not None:
             effective_config.features.no_literature = no_literature
+        if oracle_retrieval is not None:
+            effective_config.features.oracle_retrieval = oracle_retrieval
 
     # Extract config values for use in function
     budget_config = effective_config.budget
@@ -380,6 +390,7 @@ async def run_agent_mcp(
     hide_go_terms = effective_config.features.hide_go_terms
     multi_agent_mode = effective_config.features.multi_agent
     no_literature_mode = effective_config.features.no_literature
+    oracle_retrieval_mode = effective_config.features.oracle_retrieval
 
     # Set up logging
     setup_logging(verbose=verbose_mode)
@@ -403,6 +414,19 @@ async def run_agent_mcp(
     if no_literature_mode:
         trace.log_info("Memorization mode enabled (no literature access)")
 
+    # Oracle retrieval: load ground truth PMCIDs for this gene
+    oracle_pmcids: list[str] | None = None
+    if oracle_retrieval_mode:
+        from eval.data_loader import get_oracle_pmcids
+
+        oracle_pmcids = get_oracle_pmcids(gene_id)
+        trace.log_info(
+            f"Oracle retrieval enabled: {len(oracle_pmcids)} ground truth papers "
+            f"(+ BM25 backfill to {budget_config.max_papers} total)"
+        )
+        if oracle_pmcids:
+            trace.log_info(f"Oracle PMCIDs: {oracle_pmcids}")
+
     hooks = BudgetControlHooks(budget_config, model=model_name, trace=trace)
 
     # Use different prompts for memorization mode vs normal mode
@@ -418,6 +442,7 @@ async def run_agent_mcp(
         max_papers=budget_config.max_papers,
         multi_agent=multi_agent_mode,
         no_literature=no_literature_mode,
+        oracle_pmcids=oracle_pmcids,
     )
 
     mcp_servers = []

@@ -83,6 +83,49 @@ def get_all_gene_ids(
 
 
 # =============================================================================
+# Oracle Retrieval Helpers
+# =============================================================================
+
+
+def get_oracle_pmcids(
+    gene_id: str,
+    ground_truth_path: str | Path = "data/ground_truth_top100.jsonl",
+) -> list[str]:
+    """Extract the set of PMCIDs that contain ground truth annotations for a gene.
+
+    Collects unique PMCIDs from all in_corpus=True annotations across all three
+    tasks. This provides the "oracle" paper set: the exact papers an agent would
+    need to read to achieve ceiling performance.
+
+    Args:
+        gene_id: FlyBase gene ID (e.g., "FBgn0000014")
+        ground_truth_path: Path to ground truth JSONL file
+
+    Returns:
+        Sorted list of unique PMCIDs (e.g., ["PMC1234567", "PMC2345678"])
+    """
+    gt = load_ground_truth(gene_id=gene_id, ground_truth_path=ground_truth_path)
+
+    pmcids: set[str] = set()
+
+    # Task 1: GO annotations have pmcid field
+    for ann in gt.get("task1_function", []):
+        if ann.get("in_corpus") and ann.get("pmcid"):
+            pmcids.add(ann["pmcid"])
+
+    # Task 2: Expression annotations have pmcid field
+    for ann in gt.get("task2_expression", []):
+        if ann.get("in_corpus") and ann.get("pmcid"):
+            pmcids.add(ann["pmcid"])
+
+    # Task 3: Synonyms don't have per-annotation PMCIDs (in_corpus is text-based),
+    # so we can't extract oracle papers for them. The oracle papers from tasks 1&2
+    # will naturally cover many synonyms since those papers discuss the gene.
+
+    return sorted(pmcids)
+
+
+# =============================================================================
 # Agent Output Loading
 # =============================================================================
 

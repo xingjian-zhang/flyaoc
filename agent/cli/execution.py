@@ -24,6 +24,7 @@ def run_single_gene_quiet(
     hide_terms: bool = False,
     multi_agent: bool = False,
     no_literature: bool = False,
+    oracle_retrieval: bool = False,
 ) -> dict[str, Any]:
     """Run the MCP agent on a single gene without printing (for batch mode).
 
@@ -42,6 +43,7 @@ def run_single_gene_quiet(
             hide_terms=hide_terms,
             multi_agent=multi_agent,
             no_literature=no_literature,
+            oracle_retrieval=oracle_retrieval,
         )
     )
     # Convert AgentRunResult to dict for backwards compatibility
@@ -59,6 +61,7 @@ def run_single_gene(
     hide_terms: bool = False,
     multi_agent: bool = False,
     no_literature: bool = False,
+    oracle_retrieval: bool = False,
 ) -> dict[str, Any]:
     """Run the MCP agent on a single gene and return results.
 
@@ -73,6 +76,7 @@ def run_single_gene(
         hide_terms: If True, enable GO term hiding for specificity gap benchmark
         multi_agent: If True, use paper reader subagent for context isolation
         no_literature: If True, memorization baseline (no literature access)
+        oracle_retrieval: If True, provide ground truth papers instead of BM25
 
     Returns:
         Result dictionary with output, usage, and optional error
@@ -84,6 +88,8 @@ def run_single_gene(
         print("  [Multi-Agent mode enabled]")
     if no_literature:
         print("  [Memorization mode enabled - no literature access]")
+    if oracle_retrieval:
+        print("  [Oracle retrieval enabled - ground truth papers provided]")
     result = run_single_gene_quiet(
         gene_id,
         gene_symbol,
@@ -95,6 +101,7 @@ def run_single_gene(
         hide_terms,
         multi_agent,
         no_literature,
+        oracle_retrieval,
     )
 
     usage = result.get("usage", {})
