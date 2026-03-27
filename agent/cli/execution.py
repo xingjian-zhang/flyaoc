@@ -91,17 +91,17 @@ def run_single_gene(
     if oracle_retrieval:
         print("  [Oracle retrieval enabled - ground truth papers provided]")
     result = run_single_gene_quiet(
-        gene_id,
-        gene_symbol,
-        summary,
-        budget,
-        model,
-        verbose,
-        trace_dir,
-        hide_terms,
-        multi_agent,
-        no_literature,
-        oracle_retrieval,
+        gene_id=gene_id,
+        gene_symbol=gene_symbol,
+        summary=summary,
+        budget=budget,
+        model=model,
+        verbose=verbose,
+        trace_dir=trace_dir,
+        hide_terms=hide_terms,
+        multi_agent=multi_agent,
+        no_literature=no_literature,
+        oracle_retrieval=oracle_retrieval,
     )
 
     usage = result.get("usage", {})
