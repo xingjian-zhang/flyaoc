@@ -402,8 +402,10 @@ async def run_agent_mcp(
         if oracle_retrieval is not None:
             effective_config.features.oracle_retrieval = oracle_retrieval
 
-    # Extract config values for use in function
-    budget_config = effective_config.budget
+    # Extract config values for use in function (copy budget to avoid mutating shared config)
+    import dataclasses
+
+    budget_config = dataclasses.replace(effective_config.budget)
     model_name = effective_config.model
     temperature = effective_config.temperature
     verbose_mode = effective_config.verbose

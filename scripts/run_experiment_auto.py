@@ -36,9 +36,10 @@ def validate_environment() -> list[str]:
     """Check that the environment is ready to run experiments.
 
     Returns:
-        List of error messages (empty = all good).
+        Tuple of (errors, warnings). Errors are fatal; warnings are informational.
     """
     errors = []
+    warnings = []
 
     # Check API key
     if not os.environ.get("OPENAI_API_KEY"):
@@ -61,7 +62,7 @@ def validate_environment() -> list[str]:
     try:
         from eval.run_eval import main  # noqa: F401
     except ImportError as e:
-        errors.append(f"Eval import failed: {e}. Run 'uv sync'.")
+        warnings.append(f"Eval import failed: {e}. Evaluation step will be skipped.")
 
     # Check data files
     data_dir = Path("data")
@@ -75,7 +76,7 @@ def validate_environment() -> list[str]:
     if not ontology_dir.exists() or not any(ontology_dir.iterdir()):
         errors.append("Ontology indices missing. Run: uv run python -m scripts.download_ontologies")
 
-    return errors
+    return errors, warnings
 
 
 def run_experiment_with_retry(
@@ -333,7 +334,10 @@ def main():
 
     # Step 1: Validate
     print("\n[1/4] Validating environment...")
-    errors = validate_environment()
+    errors, warnings = validate_environment()
+    if warnings:
+        for w in warnings:
+            print(f"  WARNING: {w}")
     if errors:
         print("Environment validation FAILED:")
         for e in errors:
