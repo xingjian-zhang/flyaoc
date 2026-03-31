@@ -78,6 +78,7 @@ async def run_benchmark_parallel(
     hide_terms: bool = False,
     multi_agent: bool = False,
     no_literature: bool = False,
+    oracle_retrieval: bool = False,
 ) -> dict:
     """Run benchmark with parallel gene processing.
 
@@ -108,6 +109,7 @@ async def run_benchmark_parallel(
         "hide_terms": hide_terms,
         "multi_agent": multi_agent,
         "no_literature": no_literature,
+        "oracle_retrieval": oracle_retrieval,
         "workers": workers,
         "total": len(genes),
         "successful": 0,
@@ -144,7 +146,12 @@ async def run_benchmark_parallel(
         return results_summary
 
     # Progress bar
-    desc = "Processing genes (hidden terms)" if hide_terms else "Processing genes"
+    if oracle_retrieval:
+        desc = "Processing genes (oracle retrieval)"
+    elif hide_terms:
+        desc = "Processing genes (hidden terms)"
+    else:
+        desc = "Processing genes"
     pbar = tqdm(total=len(remaining_genes), desc=desc, unit="gene")
 
     def on_complete(result: GeneResult) -> None:
@@ -164,6 +171,7 @@ async def run_benchmark_parallel(
         hide_terms=hide_terms,
         multi_agent=multi_agent,
         no_literature=no_literature,
+        oracle_retrieval=oracle_retrieval,
         on_complete=on_complete,
     )
 
@@ -198,6 +206,7 @@ def run_benchmark(
     multi_agent: bool = False,
     workers: int = 1,
     no_literature: bool = False,
+    oracle_retrieval: bool = False,
 ) -> None:
     """Run the agent on benchmark genes from CSV.
 
@@ -250,6 +259,7 @@ def run_benchmark(
                 hide_terms=hide_terms,
                 multi_agent=multi_agent,
                 no_literature=no_literature,
+                oracle_retrieval=oracle_retrieval,
             )
         )
         results_summary["metadata"] = metadata
@@ -263,6 +273,7 @@ def run_benchmark(
             "hide_terms": hide_terms,
             "multi_agent": multi_agent,
             "no_literature": no_literature,
+            "oracle_retrieval": oracle_retrieval,
             "workers": workers,
             "total": len(genes_raw),
             "successful": 0,
@@ -301,6 +312,7 @@ def run_benchmark(
                         hide_terms,
                         multi_agent,
                         no_literature,
+                        oracle_retrieval,
                     )
 
                     # Save output

@@ -35,8 +35,8 @@ dev = [
 ]
 
 [project.scripts]
-run-langgraph = "agent.run_langgraph:main"
-run-mcp = "agent.run_mcp:main"
+run-agent = "agent.run_agent:main"
+run-pipeline = "agent.run_pipeline:main"
 
 [build-system]
 requires = ["hatchling"]

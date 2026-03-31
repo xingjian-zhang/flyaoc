@@ -59,6 +59,7 @@ async def run_gene_with_retry(
     hide_terms: bool = False,
     multi_agent: bool = False,
     no_literature: bool = False,
+    oracle_retrieval: bool = False,
     max_retries: int = 5,
 ) -> dict[str, Any]:
     """Run agent on a gene with retry logic for rate limits.
@@ -72,6 +73,7 @@ async def run_gene_with_retry(
         hide_terms: Enable GO term hiding
         multi_agent: Use paper reader subagent for context isolation
         no_literature: Memorization baseline (no literature access)
+        oracle_retrieval: Oracle retrieval baseline (ground truth papers)
         max_retries: Maximum retry attempts
 
     Returns:
@@ -99,6 +101,7 @@ async def run_gene_with_retry(
             hide_terms=hide_terms,
             multi_agent=multi_agent,
             no_literature=no_literature,
+            oracle_retrieval=oracle_retrieval,
         )
         # Convert AgentRunResult to dict for backwards compatibility
         return result.to_dict()
@@ -117,6 +120,7 @@ async def run_gene_with_semaphore(
     hide_terms: bool = False,
     multi_agent: bool = False,
     no_literature: bool = False,
+    oracle_retrieval: bool = False,
     max_retries: int = 5,
     on_complete: Callable[[GeneResult], None] | None = None,
 ) -> GeneResult:
@@ -133,6 +137,7 @@ async def run_gene_with_semaphore(
         hide_terms: Enable GO term hiding
         multi_agent: Use paper reader subagent for context isolation
         no_literature: Memorization baseline (no literature access)
+        oracle_retrieval: Oracle retrieval baseline (ground truth papers)
         max_retries: Maximum retry attempts for rate limits
         on_complete: Callback when gene completes (for progress updates)
 
@@ -150,6 +155,7 @@ async def run_gene_with_semaphore(
                 hide_terms=hide_terms,
                 multi_agent=multi_agent,
                 no_literature=no_literature,
+                oracle_retrieval=oracle_retrieval,
                 max_retries=max_retries,
             )
 
@@ -192,6 +198,7 @@ async def run_genes_parallel(
     hide_terms: bool = False,
     multi_agent: bool = False,
     no_literature: bool = False,
+    oracle_retrieval: bool = False,
     max_retries: int = 5,
     on_complete: Callable[[GeneResult], None] | None = None,
 ) -> list[GeneResult]:
@@ -208,6 +215,7 @@ async def run_genes_parallel(
         hide_terms: Enable GO term hiding
         multi_agent: Use paper reader subagent for context isolation
         no_literature: Memorization baseline (no literature access)
+        oracle_retrieval: Oracle retrieval baseline (ground truth papers)
         max_retries: Maximum retry attempts for rate limits
         on_complete: Callback when each gene completes
 
@@ -228,6 +236,7 @@ async def run_genes_parallel(
             hide_terms=hide_terms,
             multi_agent=multi_agent,
             no_literature=no_literature,
+            oracle_retrieval=oracle_retrieval,
             max_retries=max_retries,
             on_complete=on_complete,
         )

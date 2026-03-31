@@ -120,7 +120,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--hide-terms",
         action="store_true",
-        help="Enable GO term hiding for specificity gap benchmark (116 terms hidden)",
+        help="Enable GO term hiding for missing-term setting (120 terms hidden)",
     )
 
     # Multi-agent mode for context isolation
@@ -135,6 +135,13 @@ def create_parser() -> argparse.ArgumentParser:
         "--no-literature",
         action="store_true",
         help="Memorization baseline: no literature access (tests LLM prior knowledge)",
+    )
+
+    # Oracle retrieval baseline
+    parser.add_argument(
+        "--oracle-retrieval",
+        action="store_true",
+        help="Oracle retrieval baseline: provide ground truth papers instead of BM25 search (ceiling performance)",
     )
 
     return parser
