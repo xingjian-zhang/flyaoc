@@ -857,7 +857,7 @@ def generate_recall_at_k_pareto_plots(
 ) -> None:
     """Generate Pareto frontier plot using recall@k metrics.
 
-    Creates a single figure with 4 subplots in 2x2 layout:
+    Creates a single figure with 4 subplots in 1x4 layout (single row):
     - T1: micro semantic recall@20 (in-corpus) vs cost
     - T2: micro semantic recall@10 (in-corpus) vs cost
     - T3: micro exact recall@20 (in-corpus) vs cost
@@ -894,8 +894,7 @@ def generate_recall_at_k_pareto_plots(
         ("ref", "recall", "micro", None, "Reference Coverage", "Recall (%)"),
     ]
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-    axes = axes.flatten()  # Flatten to 1D array for easier indexing
+    fig, axes = plt.subplots(1, 4, figsize=(20, 5.75))
 
     for i, (ax, (task, metric, agg, k, title, ylabel)) in enumerate(
         zip(axes, subplot_configs, strict=True)
@@ -907,7 +906,7 @@ def generate_recall_at_k_pareto_plots(
             metric_getter = ref_getter
         else:
             metric_getter = get_metric_getter(task, metric, agg, in_corpus=True, k=k)
-        
+
         plot_pareto_comparison(
             methods_data,
             task if task != "ref" else "task1",  # Use task1 color scheme for ref
@@ -917,15 +916,17 @@ def generate_recall_at_k_pareto_plots(
             ylabel=ylabel,
             show_legend=False,
         )
-        # Only show x-label on bottom row
-        if i < 2:
-            ax.set_xlabel("")
+        # Remove individual x labels - will use shared label
+        ax.set_xlabel("")
+
+    plt.tight_layout(rect=(0, 0.14, 1, 1.0))
+
+    # Shared x label
+    fig.text(0.5, 0.09, "Average Cost per Gene ($)", ha="center", fontsize=14)
 
     # Shared legend at bottom
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=len(labels), bbox_to_anchor=(0.5, 0.02))
-
-    plt.tight_layout(rect=(0, 0.06, 1, 1.0))
+    fig.legend(handles, labels, loc="lower center", ncol=len(labels), bbox_to_anchor=(0.5, -0.01))
 
     filename = "pareto_recall_at_k_micro.pdf"
     plt.savefig(output_dir / filename, dpi=300, format="pdf")

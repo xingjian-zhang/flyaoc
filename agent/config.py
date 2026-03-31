@@ -47,12 +47,16 @@ class FeatureFlags:
     no_literature: bool = False
     """Memorization baseline: no literature access (tests LLM prior knowledge)."""
 
+    oracle_retrieval: bool = False
+    """Oracle retrieval baseline: provide ground truth papers instead of BM25 search."""
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "hide_go_terms": self.hide_go_terms,
             "multi_agent": self.multi_agent,
             "no_literature": self.no_literature,
+            "oracle_retrieval": self.oracle_retrieval,
         }
 
 
@@ -116,6 +120,7 @@ class ExecutionConfig:
                 hide_go_terms=getattr(args, "hide_terms", False),
                 multi_agent=getattr(args, "multi_agent", False),
                 no_literature=getattr(args, "no_literature", False),
+                oracle_retrieval=getattr(args, "oracle_retrieval", False),
             ),
         )
 
