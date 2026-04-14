@@ -1,0 +1,31 @@
+model_list:
+  - model_name: gpt-5-mini
+    litellm_params:
+      model: azure/gpt-5-mini
+      api_base: os.environ/AZURE_API_BASE
+      api_key: os.environ/AZURE_API_KEY
+      api_version: "2025-04-01-preview"
+
+  - model_name: claude-sonnet-4
+    litellm_params:
+      model: bedrock/us.anthropic.claude-sonnet-4-6
+      api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
+      aws_region_name: us-east-1
+
+  - model_name: deepseek-v3.2
+    litellm_params:
+      model: bedrock/deepseek.v3.2
+      api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
+      aws_region_name: us-east-1
+
+  - model_name: kimi-k2.5
+    litellm_params:
+      model: bedrock/moonshotai.kimi-k2.5
+      api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
+      aws_region_name: us-east-1
+
+  - model_name: minimax-m2.5
+    litellm_params:
+      model: bedrock/minimax.minimax-m2.5
+      api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
+      aws_region_name: us-east-1

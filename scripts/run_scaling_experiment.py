@@ -233,7 +233,7 @@ def run_single_gene(
     budget = BudgetConfig(
         max_turns=50,
         max_papers=max_papers,
-        max_cost_usd=10.0,  # Higher limit for expensive models (gpt-4o, gpt-5)
+        max_cost_usd=100.0,  # High limit to accommodate expensive models (e.g. Claude Sonnet)
     )
 
     trace_dir = output_dir / "traces"
@@ -307,7 +307,7 @@ async def run_config_parallel(
     budget = BudgetConfig(
         max_turns=50,
         max_papers=max_papers,
-        max_cost_usd=10.0,  # Higher limit for expensive models
+        max_cost_usd=100.0,  # High limit to accommodate expensive models (e.g. Claude Sonnet)
     )
 
     trace_dir = output_dir / "traces"

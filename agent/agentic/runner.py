@@ -423,6 +423,11 @@ async def run_agent_mcp(
     else:
         os.environ.pop("HIDE_GO_TERMS", None)  # Clear if previously set
 
+    # Propagate model to subagents (Multi-Agent paper readers)
+    from .subagents import set_subagent_model
+
+    set_subagent_model(model_name)
+
     # Create trace
     trace = AgentTrace(gene_id=gene_id, gene_symbol=gene_symbol)
     trace.log_info(f"Starting annotation for {gene_symbol} ({gene_id})")
@@ -502,6 +507,34 @@ async def run_agent_mcp(
                 system_prompt = system_prompt + HIDDEN_TERMS_ADDENDUM
             if multi_agent_mode:
                 system_prompt = system_prompt + MULTI_AGENT_MODE_ADDENDUM
+
+        # Configure API backend
+        from agents import set_default_openai_client
+        from agents.models._openai_shared import set_use_responses_by_default
+
+        azure_key = os.environ.get("AZURE_API_KEY")
+        azure_base = os.environ.get("AZURE_API_BASE")
+        using_proxy = bool(os.environ.get("OPENAI_BASE_URL"))
+
+        if azure_key and azure_base and model_name.startswith("gpt-"):
+            # Azure OpenAI: use native client with Responses API
+            from openai import AsyncAzureOpenAI
+
+            azure_client = AsyncAzureOpenAI(
+                api_key=azure_key,
+                azure_endpoint=azure_base,
+                api_version=os.environ.get("AZURE_API_VERSION", "2025-04-01-preview"),
+            )
+            set_default_openai_client(azure_client, use_for_tracing=False)
+            set_use_responses_by_default(True)
+            if verbose_mode:
+                trace.log_info(f"Using Azure OpenAI endpoint: {azure_base}")
+        elif using_proxy:
+            # litellm proxy: chat completions only
+            set_use_responses_by_default(False)
+        else:
+            # Direct OpenAI
+            set_use_responses_by_default(model_name.startswith("gpt-"))
 
         # Build tools list (function tools in addition to MCP tools)
         tools = []
