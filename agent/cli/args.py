@@ -78,7 +78,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--model",
         default="gpt-5-mini",
-        help="OpenAI model to use (default: gpt-5-mini)",
+        help="Model to use (default: gpt-5-mini). Non-OpenAI models require litellm proxy.",
     )
 
     # Parallel execution

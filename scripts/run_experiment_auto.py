@@ -36,9 +36,10 @@ def validate_environment() -> list[str]:
     """Check that the environment is ready to run experiments.
 
     Returns:
-        List of error messages (empty = all good).
+        Tuple of (errors, warnings). Errors are fatal; warnings are informational.
     """
     errors = []
+    warnings = []
 
     # Check API key
     if not os.environ.get("OPENAI_API_KEY"):
@@ -61,7 +62,7 @@ def validate_environment() -> list[str]:
     try:
         from eval.run_eval import main  # noqa: F401
     except ImportError as e:
-        errors.append(f"Eval import failed: {e}. Run 'uv sync'.")
+        warnings.append(f"Eval import failed: {e}. Evaluation step will be skipped.")
 
     # Check data files
     data_dir = Path("data")
@@ -75,7 +76,7 @@ def validate_environment() -> list[str]:
     if not ontology_dir.exists() or not any(ontology_dir.iterdir()):
         errors.append("Ontology indices missing. Run: uv run python -m scripts.download_ontologies")
 
-    return errors
+    return errors, warnings
 
 
 def run_experiment_with_retry(
@@ -88,6 +89,7 @@ def run_experiment_with_retry(
     verbose: bool,
     output_dir: Path | None,
     hide_terms: bool,
+    oracle_retrieval: bool = False,
     max_retries: int = 2,
 ) -> Path:
     """Run the scaling experiment with retry on failure.
@@ -113,6 +115,8 @@ def run_experiment_with_retry(
         cmd.extend(["--output-dir", str(output_dir)])
     if hide_terms:
         cmd.append("--hide-terms")
+    if oracle_retrieval:
+        cmd.append("--oracle-retrieval")
 
     # Determine output directory (match run_scaling_experiment logic)
     if output_dir is None:
@@ -317,6 +321,7 @@ def main():
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--output-dir", "-o", type=Path)
     parser.add_argument("--hide-terms", action="store_true")
+    parser.add_argument("--oracle-retrieval", action="store_true", help="Oracle retrieval (ground truth papers)")
     parser.add_argument("--max-retries", type=int, default=2, help="Max retries on failure (default: 2)")
     parser.add_argument("--dry-run", action="store_true", help="Validate environment and show plan")
     parser.add_argument("--no-report", action="store_true", help="Skip evaluation and report generation")
@@ -329,7 +334,10 @@ def main():
 
     # Step 1: Validate
     print("\n[1/4] Validating environment...")
-    errors = validate_environment()
+    errors, warnings = validate_environment()
+    if warnings:
+        for w in warnings:
+            print(f"  WARNING: {w}")
     if errors:
         print("Environment validation FAILED:")
         for e in errors:
@@ -360,6 +368,7 @@ def main():
         verbose=args.verbose,
         output_dir=args.output_dir,
         hide_terms=args.hide_terms,
+        oracle_retrieval=args.oracle_retrieval,
         max_retries=args.max_retries,
     )
 

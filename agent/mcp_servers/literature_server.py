@@ -56,11 +56,16 @@ def search_corpus(query: str, limit: int = 20) -> str:
     """
     if _oracle_pmcids:
         # Oracle mode: prioritize ground truth papers, then backfill with BM25
+        import logging
+
+        logger = logging.getLogger(__name__)
         results = []
         oracle_set = set(_oracle_pmcids)
 
-        # First, add all oracle papers (guaranteed to be included)
+        # First, add oracle papers (up to limit)
         for pmcid in _oracle_pmcids:
+            if len(results) >= limit:
+                break
             paper = get_paper_text_core(pmcid)
             if paper and not paper.get("error"):
                 results.append(
@@ -69,8 +74,12 @@ def search_corpus(query: str, limit: int = 20) -> str:
                         "title": paper.get("title", ""),
                         "abstract": (paper.get("abstract", "") or "")[:500],
                         "relevance_score": 100.0,
-                        "gene_in_title": True,
+                        "oracle": True,
                     }
+                )
+            else:
+                logger.warning(
+                    "Oracle paper %s not found in corpus (skipped)", pmcid
                 )
 
         # Then backfill remaining slots with BM25 results (excluding oracle papers)

@@ -207,6 +207,7 @@ def run_single_gene(
     multi_agent: bool = False,
     no_literature: bool = False,
     hide_terms: bool = False,
+    oracle_retrieval: bool = False,
 ) -> dict:
     """Run agent on single gene and save results (sequential mode).
 
@@ -221,6 +222,7 @@ def run_single_gene(
         multi_agent: Use paper reader subagent for context isolation
         no_literature: Memorization baseline (no literature access)
         hide_terms: Enable specificity gap benchmark (hide GO terms)
+        oracle_retrieval: Oracle retrieval baseline (ground truth papers)
 
     Returns:
         Result dict with output, usage, error
@@ -231,7 +233,7 @@ def run_single_gene(
     budget = BudgetConfig(
         max_turns=50,
         max_papers=max_papers,
-        max_cost_usd=10.0,  # Higher limit for expensive models (gpt-4o, gpt-5)
+        max_cost_usd=100.0,  # High limit to accommodate expensive models (e.g. Claude Sonnet)
     )
 
     trace_dir = output_dir / "traces"
@@ -246,6 +248,7 @@ def run_single_gene(
             multi_agent=multi_agent,
             no_literature=no_literature,
             hide_go_terms=hide_terms,
+            oracle_retrieval=oracle_retrieval,
         ),
     )
 
@@ -281,6 +284,7 @@ async def run_config_parallel(
     multi_agent: bool = False,
     no_literature: bool = False,
     hide_terms: bool = False,
+    oracle_retrieval: bool = False,
 ) -> dict:
     """Run a single paper config with parallel gene processing.
 
@@ -295,6 +299,7 @@ async def run_config_parallel(
         multi_agent: Use paper reader subagent for context isolation
         no_literature: Memorization baseline (no literature access)
         hide_terms: Enable specificity gap benchmark (hide GO terms)
+        oracle_retrieval: Oracle retrieval baseline (ground truth papers)
 
     Returns:
         Config results dict
@@ -302,7 +307,7 @@ async def run_config_parallel(
     budget = BudgetConfig(
         max_turns=50,
         max_papers=max_papers,
-        max_cost_usd=10.0,  # Higher limit for expensive models
+        max_cost_usd=100.0,  # High limit to accommodate expensive models (e.g. Claude Sonnet)
     )
 
     trace_dir = output_dir / "traces"
@@ -371,6 +376,7 @@ async def run_config_parallel(
         multi_agent=multi_agent,
         no_literature=no_literature,
         hide_terms=hide_terms,
+        oracle_retrieval=oracle_retrieval,
         on_complete=on_complete,
     )
 
@@ -408,6 +414,7 @@ def run_scaling_experiment(
     workers: int = 1,
     method: str = METHOD_SINGLE,
     hide_terms: bool = False,
+    oracle_retrieval: bool = False,
 ) -> dict:
     """Run the full scaling experiment.
 
@@ -422,6 +429,7 @@ def run_scaling_experiment(
         workers: Number of parallel workers (1 = sequential)
         method: Agent method to use (single, multi, pipeline)
         hide_terms: Enable specificity gap benchmark (hide GO terms)
+        oracle_retrieval: Oracle retrieval baseline (ground truth papers)
 
     Returns:
         Summary dict with costs and results per configuration
@@ -460,6 +468,7 @@ def run_scaling_experiment(
         print(f"  Total runs: {total_runs}")
         print(f"  Workers: {workers}")
         print(f"  Hide terms: {hide_terms}")
+        print(f"  Oracle retrieval: {oracle_retrieval}")
         # Cost estimates vary by method
         cost_per_paper = {"single": 0.10, "multi": 0.15, "pipeline": 0.03, "memorization": 0.01}
         est_cost = sum(
@@ -474,6 +483,8 @@ def run_scaling_experiment(
     print(f"Workers: {workers}")
     if hide_terms:
         print("Hide terms: ENABLED (specificity gap benchmark)")
+    if oracle_retrieval:
+        print("Oracle retrieval: ENABLED (ground truth papers)")
 
     # Convert tuples to GeneTask objects
     gene_tasks = [
@@ -488,6 +499,7 @@ def run_scaling_experiment(
         "paper_configs": paper_configs,
         "workers": workers,
         "hide_terms": hide_terms,
+        "oracle_retrieval": oracle_retrieval,
         "genes": [{"id": g[0], "symbol": g[1], "corpus_size": g[2]} for g in genes],
         "results_by_config": {},
     }
@@ -520,6 +532,7 @@ def run_scaling_experiment(
                     multi_agent=multi_agent,
                     no_literature=no_literature,
                     hide_terms=hide_terms,
+                    oracle_retrieval=oracle_retrieval,
                 )
             )
         else:
@@ -568,6 +581,7 @@ def run_scaling_experiment(
                                 multi_agent=multi_agent,
                                 no_literature=no_literature,
                                 hide_terms=hide_terms,
+                                oracle_retrieval=oracle_retrieval,
                             )
                     except Exception as e:
                         config_results["genes"].append(
@@ -703,6 +717,11 @@ def main():
         action="store_true",
         help="Enable specificity gap benchmark (hide GO terms)",
     )
+    parser.add_argument(
+        "--oracle-retrieval",
+        action="store_true",
+        help="Oracle retrieval baseline (use ground truth papers instead of BM25)",
+    )
     # Keep --multi-agent for backwards compatibility
     parser.add_argument(
         "--multi-agent",
@@ -751,6 +770,7 @@ def main():
         workers=args.workers,
         method=args.method,
         hide_terms=args.hide_terms,
+        oracle_retrieval=args.oracle_retrieval,
     )
 
 

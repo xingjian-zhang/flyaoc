@@ -31,6 +31,15 @@ from ..config import DEFAULT_MODEL, DEFAULT_TEMPERATURE
 from ..core.ontology import search_anatomy_core, search_go_core, search_stage_core
 from ..core.papers import get_paper_text_core
 
+# Module-level model override for subagents (set by runner.py before execution)
+_subagent_model: str = DEFAULT_MODEL
+
+
+def set_subagent_model(model: str) -> None:
+    """Set the model used by paper reader subagents."""
+    global _subagent_model
+    _subagent_model = model
+
 
 def extract_run_usage(result: RunResult) -> dict[str, int]:
     """Extract total token usage from a RunResult.
@@ -320,7 +329,7 @@ def _create_paper_reader_agent(hide_terms: bool = False) -> Agent:
     return Agent(
         name="PaperReaderAgent",
         instructions=instructions,
-        model=DEFAULT_MODEL,
+        model=_subagent_model,
         model_settings=ModelSettings(temperature=DEFAULT_TEMPERATURE),
         output_type=ResolvedPaperExtractions,
         tools=[search_go_terms, search_anatomy_terms, search_stage_terms],

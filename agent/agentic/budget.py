@@ -16,7 +16,7 @@ class BudgetConfig:
 
     max_turns: int = 50
     max_papers: int = 10
-    max_cost_usd: float = 1.0
+    max_cost_usd: float = 100.0
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""

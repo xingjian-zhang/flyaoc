@@ -120,6 +120,7 @@ def create_task_prompt(
     gene_symbol: str,
     summary: str,
     budget: BudgetConfig,
+    oracle_pmcids: list[str] | None = None,
 ) -> str:
     """Create the task prompt for the agent.
 
@@ -128,22 +129,42 @@ def create_task_prompt(
         gene_symbol: Gene symbol
         summary: Optional gene summary
         budget: Budget configuration
+        oracle_pmcids: If provided, explicit list of PMCIDs the agent must read
 
     Returns:
         Formatted task prompt
     """
-    return f"""Annotate gene {gene_symbol} ({gene_id}).
+    # Build oracle-specific or generic paper reading instructions
+    if oracle_pmcids:
+        oracle_list = "\n".join(f"- {pmcid}" for pmcid in oracle_pmcids)
+        remaining = max(0, budget.max_papers - len(oracle_pmcids))
+        paper_instructions = f"""## Oracle Papers (MUST READ)
+The following {len(oracle_pmcids)} papers contain key annotations for this gene.
+You MUST read ALL of them using `get_paper_text` before submitting:
+{oracle_list}
 
-{f"Gene Summary: {summary}" if summary else ""}
+After reading all oracle papers, read up to {remaining} additional papers from search results.
+Your total paper budget is {budget.max_papers}.
 
-## Resources
+## CRITICAL REQUIREMENT
+**You MUST read ALL {len(oracle_pmcids)} oracle papers listed above using `get_paper_text`.**
+Then read additional papers from `search_corpus` results up to your budget of {budget.max_papers}.
+Do NOT submit early - extract as much information as possible from each paper."""
+    else:
+        paper_instructions = f"""## Resources
 - You MUST read exactly {budget.max_papers} papers before submitting annotations
 - You have {budget.max_turns} turns to complete the task
 
 ## CRITICAL REQUIREMENT
 **You MUST read at least {budget.max_papers} papers using `get_paper_text` before calling `submit_annotations`.**
 If fewer than {budget.max_papers} relevant papers exist for this gene, read all available papers.
-Do NOT submit early - extract as much information as possible from each paper.
+Do NOT submit early - extract as much information as possible from each paper."""
+
+    return f"""Annotate gene {gene_symbol} ({gene_id}).
+
+{f"Gene Summary: {summary}" if summary else ""}
+
+{paper_instructions}
 
 ## Tools Available
 - `search_corpus`: Find papers mentioning the gene
@@ -284,12 +305,11 @@ def extract_validated_annotations_from_trace(trace: AgentTrace) -> dict[str, Any
             if isinstance(result, dict):
                 text_field = result.get("text")
                 # text_field could be a dict or a string
-                if isinstance(text_field, dict) and text_field.get("valid") is True:
-                    if pending_annotations:
-                        last_valid_annotations = pending_annotations
-                elif result.get("valid") is True:
-                    if pending_annotations:
-                        last_valid_annotations = pending_annotations
+                if (
+                    (isinstance(text_field, dict) and text_field.get("valid") is True)
+                    or result.get("valid") is True
+                ) and pending_annotations:
+                    last_valid_annotations = pending_annotations
             pending_annotations = None  # Reset for next call
 
     return last_valid_annotations
@@ -382,8 +402,10 @@ async def run_agent_mcp(
         if oracle_retrieval is not None:
             effective_config.features.oracle_retrieval = oracle_retrieval
 
-    # Extract config values for use in function
-    budget_config = effective_config.budget
+    # Extract config values for use in function (copy budget to avoid mutating shared config)
+    import dataclasses
+
+    budget_config = dataclasses.replace(effective_config.budget)
     model_name = effective_config.model
     temperature = effective_config.temperature
     verbose_mode = effective_config.verbose
@@ -400,6 +422,11 @@ async def run_agent_mcp(
         os.environ["HIDE_GO_TERMS"] = "1"
     else:
         os.environ.pop("HIDE_GO_TERMS", None)  # Clear if previously set
+
+    # Propagate model to subagents (Multi-Agent paper readers)
+    from .subagents import set_subagent_model
+
+    set_subagent_model(model_name)
 
     # Create trace
     trace = AgentTrace(gene_id=gene_id, gene_symbol=gene_symbol)
@@ -420,6 +447,13 @@ async def run_agent_mcp(
         from eval.data_loader import get_oracle_pmcids
 
         oracle_pmcids = get_oracle_pmcids(gene_id)
+        # Auto-adjust budget so oracle papers are never truncated
+        if len(oracle_pmcids) > budget_config.max_papers:
+            trace.log_info(
+                f"Auto-increased max_papers from {budget_config.max_papers} "
+                f"to {len(oracle_pmcids)} to fit all oracle papers"
+            )
+            budget_config.max_papers = len(oracle_pmcids)
         trace.log_info(
             f"Oracle retrieval enabled: {len(oracle_pmcids)} ground truth papers "
             f"(+ BM25 backfill to {budget_config.max_papers} total)"
@@ -435,7 +469,9 @@ async def run_agent_mcp(
             gene_id, gene_symbol, summary, budget_config.max_turns
         )
     else:
-        task_prompt = create_task_prompt(gene_id, gene_symbol, summary, budget_config)
+        task_prompt = create_task_prompt(
+            gene_id, gene_symbol, summary, budget_config, oracle_pmcids=oracle_pmcids
+        )
 
     server_params = get_mcp_server_params(
         hide_terms=hide_go_terms,
@@ -471,6 +507,34 @@ async def run_agent_mcp(
                 system_prompt = system_prompt + HIDDEN_TERMS_ADDENDUM
             if multi_agent_mode:
                 system_prompt = system_prompt + MULTI_AGENT_MODE_ADDENDUM
+
+        # Configure API backend
+        from agents import set_default_openai_client
+        from agents.models._openai_shared import set_use_responses_by_default
+
+        azure_key = os.environ.get("AZURE_API_KEY")
+        azure_base = os.environ.get("AZURE_API_BASE")
+        using_proxy = bool(os.environ.get("OPENAI_BASE_URL"))
+
+        if azure_key and azure_base and model_name.startswith("gpt-"):
+            # Azure OpenAI: use native client with Responses API
+            from openai import AsyncAzureOpenAI
+
+            azure_client = AsyncAzureOpenAI(
+                api_key=azure_key,
+                azure_endpoint=azure_base,
+                api_version=os.environ.get("AZURE_API_VERSION", "2025-04-01-preview"),
+            )
+            set_default_openai_client(azure_client, use_for_tracing=False)
+            set_use_responses_by_default(True)
+            if verbose_mode:
+                trace.log_info(f"Using Azure OpenAI endpoint: {azure_base}")
+        elif using_proxy:
+            # litellm proxy: chat completions only
+            set_use_responses_by_default(False)
+        else:
+            # Direct OpenAI
+            set_use_responses_by_default(model_name.startswith("gpt-"))
 
         # Build tools list (function tools in addition to MCP tools)
         tools = []

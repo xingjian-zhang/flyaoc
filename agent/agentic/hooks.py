@@ -22,6 +22,11 @@ MODEL_PRICING = {
     "gpt-4o-mini": {"input": 0.00015, "cached": 0.000075, "output": 0.0006},
     "gpt-4-turbo": {"input": 0.01, "cached": 0.005, "output": 0.03},
     "gpt-4": {"input": 0.03, "cached": 0.015, "output": 0.06},
+    # Non-OpenAI models (via litellm proxy + Bedrock)
+    "claude-sonnet-4": {"input": 0.003, "cached": 0.0003, "output": 0.015},
+    "deepseek-v3.2": {"input": 0.00062, "cached": 0.00031, "output": 0.00185},
+    "kimi-k2.5": {"input": 0.0006, "cached": 0.0003, "output": 0.003},
+    "minimax-m2.5": {"input": 0.0003, "cached": 0.00015, "output": 0.0012},
     # Default fallback
     "default": {"input": 0.00025, "cached": 0.000125, "output": 0.002},
 }
