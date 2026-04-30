@@ -15,10 +15,12 @@ def load_manifest(path: str | Path) -> dict[str, Any]:
         return json.load(handle)
 
 
-def evaluate_manifest(manifest_path: str | Path) -> list[dict[str, Any]]:
+def evaluate_manifest(manifest_path: str | Path, *, include_optional: bool = False) -> list[dict[str, Any]]:
     manifest = load_manifest(manifest_path)
     rows: list[dict[str, Any]] = []
     for artifact in manifest["prediction_files"]:
+        if not include_optional and not artifact.get("required_for_paper", True):
+            continue
         prediction_path = Path(manifest_path).parent / artifact["path"]
         if not prediction_path.exists():
             if artifact.get("required_for_paper", True):

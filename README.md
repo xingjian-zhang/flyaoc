@@ -66,8 +66,8 @@ See `docs/DATA.md` for schemas.
 
 ## Current Artifact Status
 
-This branch establishes the review artifact structure, evaluator, scripts, and
-smoke fixture. The remaining normalization pass is to import the final frozen
-paper-result predictions into `artifacts/predictions/` and update
-`artifacts/predictions/manifest.json` so every main-body table maps to a
-specific prediction file.
+This branch contains the review artifact structure, evaluator, scripts, smoke
+fixture, and normalized frozen prediction files for the main architecture,
+model-scaling, cross-family, and budget-32 result groups. The manifest maps
+each prediction file to its baseline, provider, model, paper budget, source run,
+and run-status counts.

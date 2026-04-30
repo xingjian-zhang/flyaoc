@@ -8,5 +8,7 @@ Rules:
 - Include only model outputs needed by evaluation.
 - Strip traces, prompts, logs, raw API responses, local paths, and credentials.
 - Map every paper-result file in `manifest.json`.
+- Represent failed or empty runs with empty prediction arrays and a compact
+  `run_status`.
 
 The `smoke/` fixture is intentionally small and is not a paper-result artifact.

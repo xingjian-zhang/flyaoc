@@ -42,6 +42,7 @@ Each row in `artifacts/predictions/**/*.jsonl` is one model output for one gene:
   "provider": "openai",
   "model": "gpt-5-mini",
   "paper_budget": 8,
+  "run_status": "ok",
   "task1_function_predictions": [{"go_id": "GO:0003700"}],
   "task2_expression_predictions": [{"anatomy_id": "FBbt:00001919", "stage_id": "FBdv:00005332"}],
   "task3_synonym_predictions": {
@@ -53,3 +54,11 @@ Each row in `artifacts/predictions/**/*.jsonl` is one model output for one gene:
 
 Do not include prompts, traces, raw API responses, provider metadata, local
 paths, or credentials in prediction artifacts.
+
+`run_status` is one of:
+
+- `ok`: the run produced a structured model output.
+- `failed`: the run failed validation or execution and is represented as an
+  empty submission for evaluation.
+- `empty_output`: no structured output was present and no publishable error
+  detail is included.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "dataset": "anonymous-042/flyaoc",
-  "notes": "Prediction artifacts contain normalized model outputs only: no prompts, traces, logs, raw API payloads, credentials, or local paths.",
+  "notes": "Prediction artifacts contain normalized model outputs only: no prompts, traces, logs, evidence text, raw API payloads, credentials, local paths, costs, or tokens.",
   "prediction_files": [
     {
       "path": "smoke/smoke_predictions.jsonl",
@@ -10,18 +10,500 @@
       "model": "gpt-5-mini",
       "paper_budget": 8,
       "n_genes": 1,
-      "paper_tables": [],
+      "run_status_counts": {
+        "ok": 1
+      },
+      "result_groups": [
+        "smoke_test"
+      ],
       "required_for_paper": false,
       "purpose": "Smoke-test fixture for evaluator and artifact schema."
+    },
+    {
+      "path": "memorization/openai_gpt-5-mini_budget0.jsonl",
+      "baseline": "memorization",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 0,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "cross_family"
+      ],
+      "source_run": "outputs/scaling/memorization-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "memorization/bedrock_claude-sonnet-4_budget0.jsonl",
+      "baseline": "memorization",
+      "provider": "bedrock",
+      "model": "claude-sonnet-4",
+      "paper_budget": 0,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/claude-sonnet-4/memorization",
+      "required_for_paper": true
+    },
+    {
+      "path": "memorization/bedrock_minimax-m2.5_budget0.jsonl",
+      "baseline": "memorization",
+      "provider": "bedrock",
+      "model": "minimax-m2.5",
+      "paper_budget": 0,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 1,
+        "ok": 99
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/minimax-m2.5/memorization",
+      "required_for_paper": true
+    },
+    {
+      "path": "memorization/bedrock_deepseek-v3.2_budget0.jsonl",
+      "baseline": "memorization",
+      "provider": "bedrock",
+      "model": "deepseek-v3.2",
+      "paper_budget": 0,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 35,
+        "failed": 1,
+        "ok": 64
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/deepseek-v3.2/memorization",
+      "required_for_paper": true
+    },
+    {
+      "path": "pipeline/openai_gpt-5-mini_budget1.jsonl",
+      "baseline": "pipeline",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 1,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 1,
+        "ok": 99
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/pipeline-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "pipeline/openai_gpt-5-mini_budget2.jsonl",
+      "baseline": "pipeline",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 2,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 1,
+        "ok": 99
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/pipeline-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "pipeline/openai_gpt-5-mini_budget4.jsonl",
+      "baseline": "pipeline",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 4,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 1,
+        "ok": 99
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/pipeline-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "pipeline/openai_gpt-5-mini_budget8.jsonl",
+      "baseline": "pipeline",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 8,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 1,
+        "failed": 1,
+        "ok": 98
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/pipeline-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "pipeline/openai_gpt-5-mini_budget16.jsonl",
+      "baseline": "pipeline",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 1,
+        "failed": 1,
+        "ok": 98
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/pipeline-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "single_agent/openai_gpt-5-mini_budget1.jsonl",
+      "baseline": "single_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 1,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/single-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "single_agent/openai_gpt-5-mini_budget2.jsonl",
+      "baseline": "single_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 2,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/single-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "single_agent/openai_gpt-5-mini_budget4.jsonl",
+      "baseline": "single_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 4,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/single-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "single_agent/openai_gpt-5-mini_budget8.jsonl",
+      "baseline": "single_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 8,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling",
+        "retrieval_ablation_bm25"
+      ],
+      "source_run": "outputs/scaling/single-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "single_agent/openai_gpt-5-mini_budget16.jsonl",
+      "baseline": "single_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/single-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "single_agent/bedrock_claude-sonnet-4_budget16.jsonl",
+      "baseline": "single_agent",
+      "provider": "bedrock",
+      "model": "claude-sonnet-4",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "failed": 3,
+        "ok": 97
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/claude-sonnet-4/single",
+      "required_for_paper": true
+    },
+    {
+      "path": "single_agent/bedrock_minimax-m2.5_budget16.jsonl",
+      "baseline": "single_agent",
+      "provider": "bedrock",
+      "model": "minimax-m2.5",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "failed": 1,
+        "ok": 99
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/minimax-m2.5/single",
+      "required_for_paper": true
+    },
+    {
+      "path": "single_agent/bedrock_deepseek-v3.2_budget16.jsonl",
+      "baseline": "single_agent",
+      "provider": "bedrock",
+      "model": "deepseek-v3.2",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 50,
+        "failed": 44,
+        "ok": 6
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/deepseek-v3.2/single",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/openai_gpt-5-mini_budget1.jsonl",
+      "baseline": "multi_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 1,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/multi-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/openai_gpt-5-mini_budget2.jsonl",
+      "baseline": "multi_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 2,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/multi-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/openai_gpt-5-mini_budget4.jsonl",
+      "baseline": "multi_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 4,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/multi-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/openai_gpt-5-mini_budget8.jsonl",
+      "baseline": "multi_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 8,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling"
+      ],
+      "source_run": "outputs/scaling/multi-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/openai_gpt-5-mini_budget16.jsonl",
+      "baseline": "multi_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "main_architecture",
+        "scaling",
+        "model_comparison"
+      ],
+      "source_run": "outputs/scaling/multi-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/openai_gpt-5-mini_budget32.jsonl",
+      "baseline": "multi_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 32,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 11,
+        "failed": 1,
+        "ok": 88
+      },
+      "result_groups": [
+        "budget32"
+      ],
+      "source_run": "outputs/rebuttal/gpt-5-mini/multi-32p",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/openai_gpt-4o_budget16.jsonl",
+      "baseline": "multi_agent",
+      "provider": "openai",
+      "model": "gpt-4o",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 1,
+        "ok": 99
+      },
+      "result_groups": [
+        "model_comparison"
+      ],
+      "source_run": "outputs/scaling/multi-gpt4o-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/openai_gpt-5_budget16.jsonl",
+      "baseline": "multi_agent",
+      "provider": "openai",
+      "model": "gpt-5",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "failed": 1,
+        "ok": 99
+      },
+      "result_groups": [
+        "model_comparison"
+      ],
+      "source_run": "outputs/scaling/multi-gpt5-950d202",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/bedrock_claude-sonnet-4_budget16.jsonl",
+      "baseline": "multi_agent",
+      "provider": "bedrock",
+      "model": "claude-sonnet-4",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "failed": 10,
+        "ok": 90
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/claude-sonnet-4/multi",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/bedrock_minimax-m2.5_budget16.jsonl",
+      "baseline": "multi_agent",
+      "provider": "bedrock",
+      "model": "minimax-m2.5",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "ok": 100
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/minimax-m2.5/multi",
+      "required_for_paper": true
+    },
+    {
+      "path": "multi_agent/bedrock_deepseek-v3.2_budget16.jsonl",
+      "baseline": "multi_agent",
+      "provider": "bedrock",
+      "model": "deepseek-v3.2",
+      "paper_budget": 16,
+      "n_genes": 100,
+      "run_status_counts": {
+        "empty_output": 40,
+        "ok": 60
+      },
+      "result_groups": [
+        "cross_family"
+      ],
+      "source_run": "outputs/rebuttal/deepseek-v3.2/multi",
+      "required_for_paper": true
     }
-  ],
-  "paper_prediction_files_to_add": [
-    "memorization/openai_gpt-5-mini.jsonl",
-    "pipeline/openai_gpt-5-mini_budget8.jsonl",
-    "single_agent/openai_gpt-5-mini_budget8.jsonl",
-    "multi_agent/openai_gpt-5-mini_budget8.jsonl",
-    "single_agent/bedrock_claude-sonnet-4.6_budget8.jsonl",
-    "single_agent/bedrock_minimax-m2.5_budget8.jsonl",
-    "single_agent/bedrock_deepseek-v3.2_budget8.jsonl"
   ]
 }
