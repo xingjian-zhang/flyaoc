@@ -1,0 +1,20 @@
+providers:
+  openai:
+    enabled: false
+    api_key_env: OPENAI_API_KEY
+    models:
+      - gpt-5-mini
+      - gpt-5
+
+  bedrock:
+    enabled: false
+    region_env: AWS_REGION
+    profile_env: AWS_PROFILE
+    models:
+      - claude-sonnet-4.6
+      - minimax-m2.5
+      - deepseek-v3.2
+
+notes:
+  default_reproduction_path: "No provider credentials are needed for table reproduction."
+  optional_reruns: "Enable a provider only if you intend to rerun agents."

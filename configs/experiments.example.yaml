@@ -1,0 +1,18 @@
+dataset:
+  hf_dataset_id: anonymous-042/flyaoc
+  benchmark_file: benchmark.jsonl
+  corpus_file: corpus.jsonl
+  ontology_files:
+    go: ontologies/go-basic.obo
+    anatomy: ontologies/fly_anatomy.obo
+    development: ontologies/fly_development.obo
+
+evaluation:
+  verified_labels_only: true
+  task1_recall_k: 20
+  task2_recall_k: 10
+  task3_recall_k: 20
+
+default_reproduction:
+  require_model_api_keys: false
+  prediction_manifest: artifacts/predictions/manifest.json

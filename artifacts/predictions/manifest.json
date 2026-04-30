@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "dataset": "anonymous-042/flyaoc",
+  "notes": "Prediction artifacts contain normalized model outputs only: no prompts, traces, logs, raw API payloads, credentials, or local paths.",
+  "prediction_files": [
+    {
+      "path": "smoke/smoke_predictions.jsonl",
+      "baseline": "single_agent",
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "paper_budget": 8,
+      "n_genes": 1,
+      "paper_tables": [],
+      "required_for_paper": false,
+      "purpose": "Smoke-test fixture for evaluator and artifact schema."
+    }
+  ],
+  "paper_prediction_files_to_add": [
+    "memorization/openai_gpt-5-mini.jsonl",
+    "pipeline/openai_gpt-5-mini_budget8.jsonl",
+    "single_agent/openai_gpt-5-mini_budget8.jsonl",
+    "multi_agent/openai_gpt-5-mini_budget8.jsonl",
+    "single_agent/bedrock_claude-sonnet-4.6_budget8.jsonl",
+    "single_agent/bedrock_minimax-m2.5_budget8.jsonl",
+    "single_agent/bedrock_deepseek-v3.2_budget8.jsonl"
+  ]
+}

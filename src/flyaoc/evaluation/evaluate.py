@@ -1,0 +1,256 @@
+"""Evaluate normalized FlyAOC predictions against verified benchmark labels."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from statistics import mean
+from typing import Any
+
+from flyaoc.data import DatasetConfig, download_dataset_file, load_benchmark_records
+from flyaoc.evaluation.io import read_jsonl
+from flyaoc.evaluation.ontology import AnatomySimilarity, GoSimilarity
+from flyaoc.evaluation.recall import exact_recall_at_k, recall_series, semantic_recall_at_k
+
+
+@dataclass(frozen=True)
+class EvaluationConfig:
+    dataset: DatasetConfig = DatasetConfig()
+    task1_k: int = 20
+    task2_k: int = 10
+    task3_k: int = 20
+    go_obo_path: Path | None = None
+    anatomy_obo_path: Path | None = None
+
+
+def evaluate_prediction_file(
+    prediction_file: str | Path,
+    *,
+    config: EvaluationConfig | None = None,
+    benchmark_limit: int | None = None,
+) -> dict[str, Any]:
+    predictions = read_jsonl(prediction_file)
+    return evaluate_prediction_rows(predictions, config=config, benchmark_limit=benchmark_limit)
+
+
+def evaluate_prediction_rows(
+    predictions: list[dict[str, Any]],
+    *,
+    config: EvaluationConfig | None = None,
+    benchmark_limit: int | None = None,
+) -> dict[str, Any]:
+    cfg = config or EvaluationConfig()
+    benchmark = {
+        row["gene_id"]: row
+        for row in load_benchmark_records(cfg.dataset, limit=benchmark_limit, streaming=False)
+    }
+
+    go_path = cfg.go_obo_path or download_dataset_file(cfg.dataset.go_obo_file, cfg.dataset)
+    anatomy_path = cfg.anatomy_obo_path or download_dataset_file(cfg.dataset.anatomy_obo_file, cfg.dataset)
+    go_sim = GoSimilarity(go_path)
+    anatomy_sim = AnatomySimilarity(anatomy_path)
+
+    gene_results = []
+    for prediction in predictions:
+        gene_id = prediction["gene_id"]
+        if gene_id not in benchmark:
+            raise KeyError(f"Prediction gene_id {gene_id} is not present in benchmark.jsonl")
+        gene_results.append(
+            evaluate_gene(
+                prediction=prediction,
+                benchmark_row=benchmark[gene_id],
+                config=cfg,
+                go_sim=go_sim,
+                anatomy_sim=anatomy_sim,
+            )
+        )
+
+    return {
+        "n_genes": len(gene_results),
+        "aggregate": aggregate_gene_results(gene_results),
+        "genes": gene_results,
+    }
+
+
+def evaluate_gene(
+    *,
+    prediction: dict[str, Any],
+    benchmark_row: dict[str, Any],
+    config: EvaluationConfig,
+    go_sim: GoSimilarity,
+    anatomy_sim: AnatomySimilarity,
+) -> dict[str, Any]:
+    task1 = evaluate_task1(
+        _prediction_list(prediction, "task1_function_predictions", "task1_function"),
+        benchmark_row.get("task1_function", []),
+        go_sim,
+        config.task1_k,
+    )
+    task2 = evaluate_task2(
+        _prediction_list(prediction, "task2_expression_predictions", "task2_expression"),
+        benchmark_row.get("task2_expression", []),
+        anatomy_sim,
+        config.task2_k,
+    )
+    task3 = evaluate_task3(
+        prediction.get("task3_synonym_predictions", prediction.get("task3_synonyms", {})),
+        benchmark_row.get("task3_synonyms", {}),
+        config.task3_k,
+    )
+    return {
+        "gene_id": prediction["gene_id"],
+        "gene_symbol": prediction.get("gene_symbol", benchmark_row.get("gene_symbol")),
+        "task1_function": task1,
+        "task2_expression": task2,
+        "task3_synonyms": task3,
+    }
+
+
+def evaluate_task1(
+    predictions: list[dict[str, Any]],
+    ground_truth: list[dict[str, Any]],
+    go_sim: GoSimilarity,
+    k: int,
+) -> dict[str, Any]:
+    pred_ids = _unique_ordered(item.get("go_id") for item in predictions)
+    gt_all = {item["go_id"] for item in ground_truth if item.get("go_id")}
+    gt_verified = {
+        item["go_id"]
+        for item in ground_truth
+        if item.get("go_id") and _is_verified_in_corpus(item)
+    }
+    series = recall_series(pred_ids, gt_verified, similarity_fn=go_sim.similarity)
+    return {
+        "gt_total_count": len(gt_all),
+        "gt_verified_count": len(gt_verified),
+        "predicted_count": len(pred_ids),
+        "exact_recall_at_k": series["exact_recall_at_k"],
+        "semantic_recall_at_k": series["semantic_recall_at_k"],
+        f"semantic_recall_at_{k}": semantic_recall_at_k(pred_ids, gt_verified, k, go_sim.similarity),
+    }
+
+
+def evaluate_task2(
+    predictions: list[dict[str, Any]],
+    ground_truth: list[dict[str, Any]],
+    anatomy_sim: AnatomySimilarity,
+    k: int,
+) -> dict[str, Any]:
+    pred_anatomy = _unique_ordered(item.get("anatomy_id") for item in predictions)
+    gt_all = {item["anatomy_id"] for item in ground_truth if item.get("anatomy_id")}
+    gt_verified = {
+        item["anatomy_id"]
+        for item in ground_truth
+        if item.get("anatomy_id") and _is_verified_in_corpus(item)
+    }
+    series = recall_series(pred_anatomy, gt_verified, similarity_fn=anatomy_sim.similarity)
+    return {
+        "gt_total_count": len(gt_all),
+        "gt_verified_count": len(gt_verified),
+        "predicted_count": len(pred_anatomy),
+        "anatomy_exact_recall_at_k": series["exact_recall_at_k"],
+        "anatomy_semantic_recall_at_k": series["semantic_recall_at_k"],
+        f"anatomy_semantic_recall_at_{k}": semantic_recall_at_k(
+            pred_anatomy, gt_verified, k, anatomy_sim.similarity
+        ),
+    }
+
+
+def evaluate_task3(
+    predictions: dict[str, Any],
+    ground_truth: dict[str, Any],
+    k: int,
+) -> dict[str, Any]:
+    pred_fullnames = _unique_ordered(predictions.get("fullname_synonyms", []))
+    pred_symbols = _unique_ordered(predictions.get("symbol_synonyms", []))
+    pred_combined = _unique_ordered([*pred_fullnames, *pred_symbols], normalize=True)
+
+    gt_fullnames = _synonym_set(ground_truth.get("fullname_synonyms", []), verified_only=True)
+    gt_symbols = _synonym_set(ground_truth.get("symbol_synonyms", []), verified_only=True)
+    gt_combined = gt_fullnames | gt_symbols
+
+    return {
+        "gt_verified_fullname_count": len(gt_fullnames),
+        "gt_verified_symbol_count": len(gt_symbols),
+        "gt_verified_combined_count": len(gt_combined),
+        "predicted_fullname_count": len(pred_fullnames),
+        "predicted_symbol_count": len(pred_symbols),
+        "combined_exact_recall_at_k": {
+            str(k_value): exact_recall_at_k(
+                [_normalize_synonym(x) for x in pred_combined], gt_combined, k_value
+            )
+            for k_value in [1, 3, 5, 10, 20, 50]
+        },
+        f"combined_exact_recall_at_{k}": exact_recall_at_k(
+            [_normalize_synonym(x) for x in pred_combined], gt_combined, k
+        ),
+    }
+
+
+def aggregate_gene_results(gene_results: list[dict[str, Any]]) -> dict[str, float]:
+    if not gene_results:
+        return {}
+    return {
+        "task1_semantic_recall_at_20": mean(
+            row["task1_function"]["semantic_recall_at_20"] for row in gene_results
+        ),
+        "task2_anatomy_semantic_recall_at_10": mean(
+            row["task2_expression"]["anatomy_semantic_recall_at_10"] for row in gene_results
+        ),
+        "task3_combined_exact_recall_at_20": mean(
+            row["task3_synonyms"]["combined_exact_recall_at_20"] for row in gene_results
+        ),
+    }
+
+
+def _prediction_list(
+    row: dict[str, Any],
+    normalized_key: str,
+    legacy_key: str,
+) -> list[dict[str, Any]]:
+    value = row.get(normalized_key, row.get(legacy_key, []))
+    if not isinstance(value, list):
+        raise TypeError(f"{normalized_key} must be a list")
+    return value
+
+
+def _is_verified_in_corpus(item: dict[str, Any]) -> bool:
+    return bool(item.get("in_corpus_verified", item.get("in_corpus", False)))
+
+
+def _unique_ordered(values: list[Any] | Any, *, normalize: bool = False) -> list[str]:
+    if not isinstance(values, list):
+        values = list(values)
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if not value:
+            continue
+        text = str(value)
+        key = _normalize_synonym(text) if normalize else text
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(text)
+    return result
+
+
+def _synonym_set(values: list[Any], *, verified_only: bool) -> set[str]:
+    result: set[str] = set()
+    for item in values:
+        if isinstance(item, str):
+            if not verified_only:
+                result.add(_normalize_synonym(item))
+            continue
+        if not isinstance(item, dict):
+            continue
+        if verified_only and not _is_verified_in_corpus(item):
+            continue
+        synonym = item.get("synonym")
+        if synonym:
+            result.add(_normalize_synonym(synonym))
+    return result
+
+
+def _normalize_synonym(value: str) -> str:
+    return value.strip().lower()
