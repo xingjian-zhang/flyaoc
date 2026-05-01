@@ -36,12 +36,23 @@ def evaluate_manifest(manifest_path: str | Path, *, include_optional: bool = Fal
                 "model": artifact.get("model", ""),
                 "paper_budget": artifact.get("paper_budget", ""),
                 "n_genes": evaluation["n_genes"],
-                "task1_semantic_recall_at_20": aggregate["task1_semantic_recall_at_20"],
-                "task2_anatomy_semantic_recall_at_10": aggregate[
-                    "task2_anatomy_semantic_recall_at_10"
+                "task1_semantic_recall_at_20_micro": aggregate[
+                    "task1_semantic_recall_at_20_micro"
                 ],
-                "task3_combined_exact_recall_at_20": aggregate[
-                    "task3_combined_exact_recall_at_20"
+                "task2_anatomy_semantic_recall_at_10_micro": aggregate[
+                    "task2_anatomy_semantic_recall_at_10_micro"
+                ],
+                "task3_combined_exact_recall_at_20_micro": aggregate[
+                    "task3_combined_exact_recall_at_20_micro"
+                ],
+                "task1_semantic_recall_at_20_macro": aggregate[
+                    "task1_semantic_recall_at_20_macro"
+                ],
+                "task2_anatomy_semantic_recall_at_10_macro": aggregate[
+                    "task2_anatomy_semantic_recall_at_10_macro"
+                ],
+                "task3_combined_exact_recall_at_20_macro": aggregate[
+                    "task3_combined_exact_recall_at_20_macro"
                 ],
             }
         )

@@ -120,12 +120,14 @@ def evaluate_task1(
         if item.get("go_id") and _is_verified_in_corpus(item)
     }
     series = recall_series(pred_ids, gt_verified, similarity_fn=go_sim.similarity)
+    semantic_sum_at_k = _semantic_recall_sum_at_k(pred_ids, gt_verified, k, go_sim.similarity)
     return {
         "gt_total_count": len(gt_all),
         "gt_verified_count": len(gt_verified),
         "predicted_count": len(pred_ids),
         "exact_recall_at_k": series["exact_recall_at_k"],
         "semantic_recall_at_k": series["semantic_recall_at_k"],
+        f"semantic_recall_sum_at_{k}": semantic_sum_at_k,
         f"semantic_recall_at_{k}": semantic_recall_at_k(pred_ids, gt_verified, k, go_sim.similarity),
     }
 
@@ -144,12 +146,16 @@ def evaluate_task2(
         if item.get("anatomy_id") and _is_verified_in_corpus(item)
     }
     series = recall_series(pred_anatomy, gt_verified, similarity_fn=anatomy_sim.similarity)
+    semantic_sum_at_k = _semantic_recall_sum_at_k(
+        pred_anatomy, gt_verified, k, anatomy_sim.similarity
+    )
     return {
         "gt_total_count": len(gt_all),
         "gt_verified_count": len(gt_verified),
         "predicted_count": len(pred_anatomy),
         "anatomy_exact_recall_at_k": series["exact_recall_at_k"],
         "anatomy_semantic_recall_at_k": series["semantic_recall_at_k"],
+        f"anatomy_semantic_recall_sum_at_{k}": semantic_sum_at_k,
         f"anatomy_semantic_recall_at_{k}": semantic_recall_at_k(
             pred_anatomy, gt_verified, k, anatomy_sim.similarity
         ),
@@ -169,6 +175,7 @@ def evaluate_task3(
     gt_symbols = _synonym_set(ground_truth.get("symbol_synonyms", []), verified_only=True)
     gt_combined = gt_fullnames | gt_symbols
 
+    combined_hits_at_k = len(set(_normalize_synonym(x) for x in pred_combined[:k]) & gt_combined)
     return {
         "gt_verified_fullname_count": len(gt_fullnames),
         "gt_verified_symbol_count": len(gt_symbols),
@@ -181,6 +188,7 @@ def evaluate_task3(
             )
             for k_value in [1, 3, 5, 10, 20, 50]
         },
+        f"combined_exact_hits_at_{k}": combined_hits_at_k,
         f"combined_exact_recall_at_{k}": exact_recall_at_k(
             [_normalize_synonym(x) for x in pred_combined], gt_combined, k
         ),
@@ -190,17 +198,54 @@ def evaluate_task3(
 def aggregate_gene_results(gene_results: list[dict[str, Any]]) -> dict[str, float]:
     if not gene_results:
         return {}
+    task1_gt = sum(row["task1_function"]["gt_verified_count"] for row in gene_results)
+    task2_gt = sum(row["task2_expression"]["gt_verified_count"] for row in gene_results)
+    task3_gt = sum(row["task3_synonyms"]["gt_verified_combined_count"] for row in gene_results)
     return {
-        "task1_semantic_recall_at_20": mean(
+        "task1_semantic_recall_at_20_micro": _safe_divide(
+            sum(row["task1_function"]["semantic_recall_sum_at_20"] for row in gene_results),
+            task1_gt,
+        ),
+        "task2_anatomy_semantic_recall_at_10_micro": _safe_divide(
+            sum(
+                row["task2_expression"]["anatomy_semantic_recall_sum_at_10"]
+                for row in gene_results
+            ),
+            task2_gt,
+        ),
+        "task3_combined_exact_recall_at_20_micro": _safe_divide(
+            sum(row["task3_synonyms"]["combined_exact_hits_at_20"] for row in gene_results),
+            task3_gt,
+        ),
+        "task1_semantic_recall_at_20_macro": mean(
             row["task1_function"]["semantic_recall_at_20"] for row in gene_results
         ),
-        "task2_anatomy_semantic_recall_at_10": mean(
+        "task2_anatomy_semantic_recall_at_10_macro": mean(
             row["task2_expression"]["anatomy_semantic_recall_at_10"] for row in gene_results
         ),
-        "task3_combined_exact_recall_at_20": mean(
+        "task3_combined_exact_recall_at_20_macro": mean(
             row["task3_synonyms"]["combined_exact_recall_at_20"] for row in gene_results
         ),
     }
+
+
+def _semantic_recall_sum_at_k(
+    predictions: list[str],
+    ground_truth: set[str],
+    k: int,
+    similarity_fn: Any,
+) -> float:
+    top_k = predictions[:k]
+    if not top_k or not ground_truth:
+        return 0.0
+    total = 0.0
+    for gt_item in ground_truth:
+        total += max((similarity_fn(pred, gt_item) for pred in top_k), default=0.0)
+    return total
+
+
+def _safe_divide(numerator: float, denominator: int) -> float:
+    return numerator / denominator if denominator else 0.0
 
 
 def _prediction_list(
