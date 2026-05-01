@@ -15,7 +15,9 @@ def load_manifest(path: str | Path) -> dict[str, Any]:
         return json.load(handle)
 
 
-def evaluate_manifest(manifest_path: str | Path, *, include_optional: bool = False) -> list[dict[str, Any]]:
+def evaluate_manifest(
+    manifest_path: str | Path, *, include_optional: bool = False
+) -> list[dict[str, Any]]:
     manifest = load_manifest(manifest_path)
     rows: list[dict[str, Any]] = []
     for artifact in manifest["prediction_files"]:
@@ -28,35 +30,68 @@ def evaluate_manifest(manifest_path: str | Path, *, include_optional: bool = Fal
             continue
         evaluation = evaluate_prediction_file(prediction_path)
         aggregate = evaluation["aggregate"]
-        rows.append(
-            {
-                "artifact": artifact["path"],
-                "baseline": artifact.get("baseline", ""),
-                "provider": artifact.get("provider", ""),
-                "model": artifact.get("model", ""),
-                "paper_budget": artifact.get("paper_budget", ""),
-                "n_genes": evaluation["n_genes"],
-                "task1_semantic_recall_at_20_micro": aggregate[
-                    "task1_semantic_recall_at_20_micro"
-                ],
-                "task2_anatomy_semantic_recall_at_10_micro": aggregate[
-                    "task2_anatomy_semantic_recall_at_10_micro"
-                ],
-                "task3_combined_exact_recall_at_20_micro": aggregate[
-                    "task3_combined_exact_recall_at_20_micro"
-                ],
-                "task1_semantic_recall_at_20_macro": aggregate[
-                    "task1_semantic_recall_at_20_macro"
-                ],
-                "task2_anatomy_semantic_recall_at_10_macro": aggregate[
-                    "task2_anatomy_semantic_recall_at_10_macro"
-                ],
-                "task3_combined_exact_recall_at_20_macro": aggregate[
-                    "task3_combined_exact_recall_at_20_macro"
-                ],
-            }
+        row = {
+            "artifact": artifact["path"],
+            "baseline": artifact.get("baseline", ""),
+            "provider": artifact.get("provider", ""),
+            "model": artifact.get("model", ""),
+            "paper_budget": artifact.get("paper_budget", ""),
+            "n_genes": evaluation["n_genes"],
+            "task1_verified_fact_count": aggregate["task1_verified_fact_count"],
+            "task2_verified_fact_count": aggregate["task2_verified_fact_count"],
+            "task3_verified_fact_count": aggregate["task3_verified_fact_count"],
+            "task1_semantic_recall_at_20_micro": aggregate[
+                "task1_semantic_recall_at_20_micro"
+            ],
+            "task2_anatomy_semantic_recall_at_10_micro": aggregate[
+                "task2_anatomy_semantic_recall_at_10_micro"
+            ],
+            "task3_combined_exact_recall_at_20_micro": aggregate[
+                "task3_combined_exact_recall_at_20_micro"
+            ],
+            "task1_semantic_recall_at_20_macro": aggregate[
+                "task1_semantic_recall_at_20_macro"
+            ],
+            "task2_anatomy_semantic_recall_at_10_macro": aggregate[
+                "task2_anatomy_semantic_recall_at_10_macro"
+            ],
+            "task3_combined_exact_recall_at_20_macro": aggregate[
+                "task3_combined_exact_recall_at_20_macro"
+            ],
+        }
+        _add_k_columns(row, "task1_semantic", aggregate["task1_semantic_recall_at_k_micro"])
+        _add_k_columns(
+            row,
+            "task2_anatomy_semantic",
+            aggregate["task2_anatomy_semantic_recall_at_k_micro"],
         )
+        _add_k_columns(
+            row,
+            "task3_combined_exact",
+            aggregate["task3_combined_exact_recall_at_k_micro"],
+        )
+        _add_k_columns(
+            row,
+            "task1_semantic_macro",
+            aggregate["task1_semantic_recall_at_k_macro"],
+        )
+        _add_k_columns(
+            row,
+            "task2_anatomy_semantic_macro",
+            aggregate["task2_anatomy_semantic_recall_at_k_macro"],
+        )
+        _add_k_columns(
+            row,
+            "task3_combined_exact_macro",
+            aggregate["task3_combined_exact_recall_at_k_macro"],
+        )
+        rows.append(row)
     return rows
+
+
+def _add_k_columns(row: dict[str, Any], prefix: str, values: dict[str, float]) -> None:
+    for k_value in sorted(values, key=lambda value: int(value)):
+        row[f"{prefix}_recall_at_{k_value}"] = values[k_value]
 
 
 def write_csv(rows: list[dict[str, Any]], output_path: str | Path) -> None:

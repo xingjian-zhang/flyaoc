@@ -195,13 +195,40 @@ def evaluate_task3(
     }
 
 
-def aggregate_gene_results(gene_results: list[dict[str, Any]]) -> dict[str, float]:
+def aggregate_gene_results(gene_results: list[dict[str, Any]]) -> dict[str, Any]:
     if not gene_results:
         return {}
     task1_gt = sum(row["task1_function"]["gt_verified_count"] for row in gene_results)
     task2_gt = sum(row["task2_expression"]["gt_verified_count"] for row in gene_results)
     task3_gt = sum(row["task3_synonyms"]["gt_verified_combined_count"] for row in gene_results)
+    task1_semantic_at_k = _aggregate_recall_at_k(
+        gene_results,
+        task_key="task1_function",
+        series_key="semantic_recall_at_k",
+        gt_count_key="gt_verified_count",
+    )
+    task2_semantic_at_k = _aggregate_recall_at_k(
+        gene_results,
+        task_key="task2_expression",
+        series_key="anatomy_semantic_recall_at_k",
+        gt_count_key="gt_verified_count",
+    )
+    task3_exact_at_k = _aggregate_recall_at_k(
+        gene_results,
+        task_key="task3_synonyms",
+        series_key="combined_exact_recall_at_k",
+        gt_count_key="gt_verified_combined_count",
+    )
     return {
+        "task1_verified_fact_count": task1_gt,
+        "task2_verified_fact_count": task2_gt,
+        "task3_verified_fact_count": task3_gt,
+        "task1_semantic_recall_at_k_micro": task1_semantic_at_k["micro"],
+        "task1_semantic_recall_at_k_macro": task1_semantic_at_k["macro"],
+        "task2_anatomy_semantic_recall_at_k_micro": task2_semantic_at_k["micro"],
+        "task2_anatomy_semantic_recall_at_k_macro": task2_semantic_at_k["macro"],
+        "task3_combined_exact_recall_at_k_micro": task3_exact_at_k["micro"],
+        "task3_combined_exact_recall_at_k_macro": task3_exact_at_k["macro"],
         "task1_semantic_recall_at_20_micro": _safe_divide(
             sum(row["task1_function"]["semantic_recall_sum_at_20"] for row in gene_results),
             task1_gt,
@@ -227,6 +254,28 @@ def aggregate_gene_results(gene_results: list[dict[str, Any]]) -> dict[str, floa
             row["task3_synonyms"]["combined_exact_recall_at_20"] for row in gene_results
         ),
     }
+
+
+def _aggregate_recall_at_k(
+    gene_results: list[dict[str, Any]],
+    *,
+    task_key: str,
+    series_key: str,
+    gt_count_key: str,
+) -> dict[str, dict[str, float]]:
+    first_series = gene_results[0][task_key][series_key]
+    k_values = sorted(first_series, key=lambda value: int(value))
+    total_gt = sum(row[task_key][gt_count_key] for row in gene_results)
+    micro: dict[str, float] = {}
+    macro: dict[str, float] = {}
+    for k_value in k_values:
+        numerator = sum(
+            row[task_key][series_key][k_value] * row[task_key][gt_count_key]
+            for row in gene_results
+        )
+        micro[k_value] = _safe_divide(numerator, total_gt)
+        macro[k_value] = mean(row[task_key][series_key][k_value] for row in gene_results)
+    return {"micro": micro, "macro": macro}
 
 
 def _semantic_recall_sum_at_k(

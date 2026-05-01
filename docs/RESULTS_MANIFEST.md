@@ -21,3 +21,8 @@ Included result groups:
 
 Do not copy raw run directories wholesale. Normalize only the model output
 objects needed by evaluation.
+
+`artifacts/tables/main_results.csv` is generated from this manifest and is the
+canonical no-API metric table. It reports primary micro metrics, secondary
+macro metrics, denominator counts, and additional recall@k columns. Failed and
+empty-output rows remain in the evaluated gene set and score zero recall.

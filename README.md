@@ -23,6 +23,20 @@ The smoke test downloads `benchmark.jsonl` and the ontology files from the
 anonymous HF dataset, evaluates a small normalized prediction fixture, and
 prints the computed metrics.
 
+## Official Metrics
+
+The paper's primary metrics are micro-averaged over the current verified,
+corpus-grounded benchmark facts:
+
+- Task 1: GO semantic recall@20.
+- Task 2: anatomy semantic recall@10.
+- Task 3: synonym exact recall@20.
+
+Failed or empty model runs remain in the denominator with zero numerator. This
+matches the reviewer-facing setting: a run that produces no usable annotations
+should not be excluded from the reported recall. Macro averages and additional
+cutoffs are regenerated as secondary table fields.
+
 ## Repository Map
 
 ```text

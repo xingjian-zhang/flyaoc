@@ -13,6 +13,21 @@ uv run python scripts/reproduce_tables.py
 This path loads labels from HF and predictions from `artifacts/predictions/`,
 then recomputes verified-label metrics.
 
+## Metric Policy
+
+The canonical paper metrics are micro-averaged over deduplicated verified facts:
+
+- Task 1: GO semantic recall@20.
+- Task 2: anatomy semantic recall@10.
+- Task 3: synonym exact recall@20.
+
+The denominator is the current verified corpus-grounded benchmark facts loaded
+from `benchmark.jsonl`: 770 GO facts, 252 expression anatomy facts, and 457
+synonym strings. Failed or empty-output rows are evaluated as empty predictions,
+so they contribute zero numerator while preserving their verified-fact
+denominators. Macro averages are emitted for diagnostics and appendix tables,
+but they are not the primary paper metric.
+
 ## Optional API Reruns
 
 Agent reruns are optional and require provider credentials. The review branch
