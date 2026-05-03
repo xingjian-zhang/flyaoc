@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 
 from flyaoc.baselines import cli
+from flyaoc.baselines.adapters import memorization, multi_agent, pipeline, single_agent
 from flyaoc.baselines.normalize import normalize_result
+from flyaoc.baselines.providers import validate_provider_environment
 from flyaoc.baselines.types import BaselineRunConfig, GeneInput, RawBaselineResult
 from flyaoc.evaluation.io import read_jsonl
 
@@ -56,6 +58,30 @@ def test_cli_help_parses_without_baseline_optional_imports(tmp_path: Path) -> No
     assert args.provider == "openai_compatible"
 
 
+def test_provider_environment_validation(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+
+    with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
+        validate_provider_environment("openai")
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    validate_provider_environment("openai")
+
+    with pytest.raises(RuntimeError, match="OPENAI_BASE_URL"):
+        validate_provider_environment("bedrock_proxy")
+
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://example.test/v1")
+    validate_provider_environment("bedrock_proxy")
+
+
+def test_adapter_modules_import_without_optional_provider_stack() -> None:
+    assert memorization.run_gene
+    assert single_agent.run_gene
+    assert multi_agent.run_gene
+    assert pipeline.run_gene
+
+
 def test_raw_to_normalized_prediction_strips_private_fields() -> None:
     raw = RawBaselineResult(
         gene=GeneInput("FBgn0000014", "abd-A"),
@@ -95,6 +121,193 @@ def test_failed_run_normalizes_to_empty_predictions() -> None:
     assert row["task1_function_predictions"] == []
     assert row["task2_expression_predictions"] == []
     assert row["task3_synonym_predictions"] == {"fullname_synonyms": [], "symbol_synonyms": []}
+
+
+def test_memorization_adapter_disables_literature(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured = {}
+
+    def fake_execution_config(config, *, multi_agent, no_literature):
+        captured["multi_agent"] = multi_agent
+        captured["no_literature"] = no_literature
+        captured["paper_budget"] = config.paper_budget
+        return {"fake": "config"}
+
+    async def fake_run_agent_mcp(gene_id, gene_symbol, *, summary, config):
+        captured["gene_id"] = gene_id
+        captured["gene_symbol"] = gene_symbol
+        captured["summary"] = summary
+        captured["config"] = config
+
+        class Result:
+            def to_dict(self):
+                return {"output": {"task1_function": []}, "usage": {"turns_used": 1}}
+
+        return Result()
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agent.agentic.runner",
+        types.SimpleNamespace(run_agent_mcp=fake_run_agent_mcp),
+    )
+    monkeypatch.setattr(memorization, "agentic_execution_config", fake_execution_config)
+
+    result = memorization.run_gene(
+        BaselineRunConfig(
+            baseline="memorization",
+            provider="openai",
+            model="gpt-5-mini",
+            paper_budget=0,
+            output_dir=tmp_path,
+        ),
+        GeneInput("FBgn0000014", "abd-A", "summary"),
+    )
+
+    assert result.baseline == "memorization"
+    assert captured["no_literature"] is True
+    assert captured["multi_agent"] is False
+    assert captured["paper_budget"] == 0
+    assert captured["config"] == {"fake": "config"}
+
+
+def test_single_agent_adapter_uses_agentic_mcp_without_delegation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured = {}
+
+    def fake_execution_config(config, *, multi_agent, no_literature):
+        captured["multi_agent"] = multi_agent
+        captured["no_literature"] = no_literature
+        captured["paper_budget"] = config.paper_budget
+        return {"fake": "config"}
+
+    async def fake_run_agent_mcp(gene_id, gene_symbol, *, summary, config):
+        captured["config"] = config
+
+        class Result:
+            def to_dict(self):
+                return {"output": {"task1_function": [{"go_id": "GO:1"}]}, "usage": {}}
+
+        return Result()
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agent.agentic.runner",
+        types.SimpleNamespace(run_agent_mcp=fake_run_agent_mcp),
+    )
+    monkeypatch.setattr(single_agent, "agentic_execution_config", fake_execution_config)
+
+    single_agent.run_gene(
+        BaselineRunConfig(
+            baseline="single_agent",
+            provider="openai",
+            model="gpt-5-mini",
+            paper_budget=16,
+            output_dir=tmp_path,
+        ),
+        GeneInput("FBgn0000014", "abd-A"),
+    )
+
+    assert captured["no_literature"] is False
+    assert captured["multi_agent"] is False
+    assert captured["paper_budget"] == 16
+    assert captured["config"] == {"fake": "config"}
+
+
+def test_multi_agent_adapter_enables_delegation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured = {}
+
+    def fake_execution_config(config, *, multi_agent, no_literature):
+        captured["multi_agent"] = multi_agent
+        captured["no_literature"] = no_literature
+        captured["paper_budget"] = config.paper_budget
+        return {"fake": "config"}
+
+    async def fake_run_agent_mcp(gene_id, gene_symbol, *, summary, config):
+        captured["config"] = config
+
+        class Result:
+            def to_dict(self):
+                return {"output": {"task1_function": [{"go_id": "GO:1"}]}, "usage": {}}
+
+        return Result()
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agent.agentic.runner",
+        types.SimpleNamespace(run_agent_mcp=fake_run_agent_mcp),
+    )
+    monkeypatch.setattr(multi_agent, "agentic_execution_config", fake_execution_config)
+
+    multi_agent.run_gene(
+        BaselineRunConfig(
+            baseline="multi_agent",
+            provider="openai",
+            model="gpt-5-mini",
+            paper_budget=16,
+            output_dir=tmp_path,
+        ),
+        GeneInput("FBgn0000014", "abd-A"),
+    )
+
+    assert captured["no_literature"] is False
+    assert captured["multi_agent"] is True
+    assert captured["paper_budget"] == 16
+    assert captured["config"] == {"fake": "config"}
+
+
+def test_pipeline_adapter_calls_langgraph_runner(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured = {}
+
+    async def fake_run_agent(gene_id, gene_symbol, *, summary, model, verbose, max_papers):
+        captured.update(
+            {
+                "gene_id": gene_id,
+                "gene_symbol": gene_symbol,
+                "summary": summary,
+                "model": model,
+                "verbose": verbose,
+                "max_papers": max_papers,
+            }
+        )
+        return {"output": {"task1_function": [{"go_id": "GO:1"}]}, "usage": {}}
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agent.pipeline.agent",
+        types.SimpleNamespace(run_agent=fake_run_agent),
+    )
+
+    result = pipeline.run_gene(
+        BaselineRunConfig(
+            baseline="pipeline",
+            provider="openai",
+            model="gpt-5-mini",
+            paper_budget=16,
+            output_dir=tmp_path,
+            verbose=True,
+        ),
+        GeneInput("FBgn0000014", "abd-A", "summary"),
+    )
+
+    assert result.baseline == "pipeline"
+    assert captured == {
+        "gene_id": "FBgn0000014",
+        "gene_symbol": "abd-A",
+        "summary": "summary",
+        "model": "gpt-5-mini",
+        "verbose": True,
+        "max_papers": 16,
+    }
 
 
 def test_mocked_baseline_run_writes_predictions_and_summary(

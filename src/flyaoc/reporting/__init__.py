@@ -1,1 +1,1 @@
-"""Reporting helpers for reviewer-facing reproduction scripts."""
+"""Reporting helpers for reproduction scripts."""

@@ -70,12 +70,12 @@ recall@k cutoffs are included as secondary fields in the regenerated tables.
 
 ```text
 configs/                 Provider and experiment config templates.
-src/agent/               Original paper baseline harness ported for reviewers.
+src/agent/               Original paper baseline harness port.
 src/flyaoc/data/          HF-first benchmark loaders.
 src/flyaoc/evaluation/    Verified-label task evaluation.
 src/flyaoc/reporting/     Table/figure reproduction helpers.
-src/flyaoc/baselines/     Reviewer-facing baseline CLI and normalization.
-scripts/                  Reviewer-facing reproduction commands.
+src/flyaoc/baselines/     Public baseline CLI and normalization.
+scripts/                  Reproduction commands.
 artifacts/predictions/    Frozen normalized model predictions.
 artifacts/evaluations/    Derived metric summaries.
 artifacts/tables/         Regenerated paper tables.

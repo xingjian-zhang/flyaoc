@@ -1,7 +1,7 @@
 # Data Layout
 
 FlyAOC uses the anonymous Hugging Face dataset as the canonical data source.
-The review code should not depend on legacy local files such as
+The code should not depend on legacy local files such as
 `genes_top100.csv`, `ground_truth_top100_as_verified.jsonl`, or
 `gene_to_pmcids_top100.json`.
 

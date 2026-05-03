@@ -1,4 +1,4 @@
-"""Hugging Face data access for the FlyAOC review artifact."""
+"""Hugging Face data access for FlyAOC."""
 
 from __future__ import annotations
 

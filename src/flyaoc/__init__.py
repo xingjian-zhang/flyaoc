@@ -1,4 +1,4 @@
-"""FlyAOC anonymous review artifact package."""
+"""FlyAOC benchmark reproduction and evaluation package."""
 
 __all__ = ["__version__"]
 

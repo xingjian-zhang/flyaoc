@@ -1,8 +1,9 @@
 # Baseline Reruns
 
 The default paper reproduction path uses frozen predictions and does not need
-API keys. This page is for reviewers who want to rerun the four main paper
-baselines with their own credentials and then evaluate the generated outputs.
+API keys. This page is for anyone who wants to rerun the four main paper
+baselines, evaluate generated outputs, or use the baseline harness as a
+template for adding a new method.
 
 The rerun harness ports the original paper code:
 
@@ -37,6 +38,25 @@ export OPENAI_BASE_URL=https://your-openai-compatible-endpoint
 The runner loads benchmark records, corpus papers, and ontology files from
 `anonymous-042/flyaoc`. Local indexes and downloaded files are cached under
 `.flyaoc_cache/`.
+
+## Implementation Map
+
+The baseline layer is split into two parts:
+
+- `src/agent/`: a close port of the original paper harness.
+- `src/flyaoc/baselines/`: thin public adapters, CLI, and output normalization.
+
+The public baselines map to the original implementation as follows:
+
+| CLI baseline | Adapter | Original harness call |
+| --- | --- | --- |
+| `memorization` | `flyaoc.baselines.adapters.memorization` | `agent.agentic.runner.run_agent_mcp` with `no_literature=True` |
+| `single_agent` | `flyaoc.baselines.adapters.single_agent` | `agent.agentic.runner.run_agent_mcp` with `multi_agent=False` |
+| `multi_agent` | `flyaoc.baselines.adapters.multi_agent` | `agent.agentic.runner.run_agent_mcp` with `multi_agent=True` |
+| `pipeline` | `flyaoc.baselines.adapters.pipeline` | `agent.pipeline.agent.run_agent` |
+
+This structure keeps the scientific behavior close to the paper code while
+making the public rerun path easy to inspect.
 
 ## Commands
 

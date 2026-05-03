@@ -35,7 +35,7 @@ def load_hidden_go_terms() -> set[str]:
         _hidden_go_terms = set()
         return _hidden_go_terms
 
-    # Missing-term experiments are intentionally excluded from the review v1
+    # Missing-term experiments are intentionally excluded from the public v1
     # harness. Keep this hook non-fatal if an old environment variable leaks in.
     hidden_terms_path = cache_dir() / "hidden_go_terms.json"
     if hidden_terms_path.exists():

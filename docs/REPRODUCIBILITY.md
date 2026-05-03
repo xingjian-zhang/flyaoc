@@ -1,6 +1,6 @@
 # Reproducibility
 
-The required review path is designed to be credential-free.
+The standard table-reproduction path is designed to be credential-free.
 
 ## No-API Path
 
@@ -30,9 +30,10 @@ but they are not the primary paper metric.
 
 ## Optional API Reruns
 
-Agent reruns are optional and require provider credentials. The review branch
-keeps this separate from table reproduction so reviewers can verify reported
-numbers without spending API budget.
+Agent reruns are optional and require provider credentials. This workflow stays
+separate from table reproduction so users can verify reported numbers without
+spending API budget, while still having runnable baseline code when they want
+to reproduce the experimental procedure or add a new method.
 
 The supported paper baselines are:
 
@@ -46,6 +47,6 @@ The supported paper providers/models are documented in
 
 ## Excluded from v1
 
-The missing-term experiment is excluded from the clean review branch v1 because
+The missing-term experiment is excluded from the clean public harness v1 because
 it requires a separate hidden-label setup. The main-body verified-label
 benchmark path remains fully represented.

@@ -1,4 +1,4 @@
-"""Review-artifact data locations for the original FlyAOC harness."""
+"""Data locations for the original FlyAOC harness."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from flyaoc.data import DatasetConfig, download_dataset_file
 
 
 def repo_root() -> Path:
-    """Return the review artifact repository root."""
+    """Return the repository root."""
     return Path(__file__).resolve().parents[3]
 
 
