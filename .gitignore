@@ -16,6 +16,8 @@ build/
 
 # Local or provider-specific run material.
 outputs/
+runs/
+.flyaoc_cache/
 logs/
 traces/
 transcripts/

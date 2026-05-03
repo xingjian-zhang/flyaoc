@@ -9,10 +9,10 @@ The benchmark data is hosted as an anonymous Hugging Face dataset:
 <https://huggingface.co/datasets/anonymous-042/flyaoc>
 
 The repository includes frozen predictions for the paper experiments, scripts
-that regenerate the reported tables, and evaluator code that can be reused for
-new systems. Running the default reproduction path does not require model API
-credentials. Rerunning agents is optional and may require provider credentials
-and API budget.
+that regenerate the reported tables, evaluator code for new systems, and the
+actual baseline harness used by the paper. Running the default reproduction
+path does not require model API credentials. Rerunning baselines is optional
+and requires provider credentials and API budget.
 
 ## Quickstart
 
@@ -38,10 +38,20 @@ prediction format and run the evaluator against the HF benchmark data. See
 `docs/DATA.md` for the dataset schema and `artifacts/predictions/` for example
 prediction files.
 
-To rerun an existing baseline, use the baseline entry points under
-`src/flyaoc/baselines/` and the provider configuration templates in `configs/`.
-This path is separate from table reproduction because it can require external
-model credentials.
+To rerun an existing baseline, install the optional baseline dependencies and
+use the public runner. This invokes the original MCP/OpenAI Agents SDK or
+LangGraph implementations, with data loaded from the anonymous HF dataset.
+This path is separate from table reproduction because provider APIs can drift
+over time; exact paper numbers are reproduced from frozen predictions.
+
+```bash
+uv sync --extra baselines
+flyaoc-run-baseline --baseline memorization --provider openai --model gpt-5-mini \
+  --paper-budget 0 --gene-id FBgn0000014 --output-dir runs/memorization-smoke
+flyaoc-evaluate-predictions runs/memorization-smoke/predictions.jsonl
+```
+
+See `docs/BASELINES.md` for baseline rerun details.
 
 ## Official Metrics
 
@@ -60,17 +70,18 @@ recall@k cutoffs are included as secondary fields in the regenerated tables.
 
 ```text
 configs/                 Provider and experiment config templates.
+src/agent/               Original paper baseline harness ported for reviewers.
 src/flyaoc/data/          HF-first benchmark loaders.
 src/flyaoc/evaluation/    Verified-label task evaluation.
 src/flyaoc/reporting/     Table/figure reproduction helpers.
-src/flyaoc/baselines/     Baseline runner entry points and documentation.
-src/flyaoc/providers/     Provider adapter interfaces and config schemas.
+src/flyaoc/baselines/     Reviewer-facing baseline CLI and normalization.
 scripts/                  Reviewer-facing reproduction commands.
 artifacts/predictions/    Frozen normalized model predictions.
 artifacts/evaluations/    Derived metric summaries.
 artifacts/tables/         Regenerated paper tables.
 artifacts/figures/        Regenerated paper figures.
 docs/                     Data and reproducibility documentation.
+runs/                     Ignored local baseline reruns.
 ```
 
 ## Reproduction Path
@@ -83,7 +94,9 @@ other model-provider credentials. It performs the following steps:
 3. Recompute verified-label metrics.
 4. Regenerate paper-facing tables and figures.
 
-The optional API rerun path is separate from this workflow.
+The optional API rerun path is separate from this workflow. It reproduces the
+experimental procedure with current model-provider behavior; it should not be
+treated as a bit-identical route to the frozen paper tables.
 
 ## Data Source
 

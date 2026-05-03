@@ -6,10 +6,17 @@ providers:
       - gpt-5-mini
       - gpt-5
 
-  bedrock:
+  openai_compatible:
     enabled: false
-    region_env: AWS_REGION
-    profile_env: AWS_PROFILE
+    base_url_env: OPENAI_BASE_URL
+    api_key_env: OPENAI_API_KEY
+    models:
+      - your-openai-compatible-model
+
+  bedrock_proxy:
+    enabled: false
+    base_url_env: OPENAI_BASE_URL
+    api_key_env: OPENAI_API_KEY
     models:
       - claude-sonnet-4.6
       - minimax-m2.5
@@ -18,3 +25,5 @@ providers:
 notes:
   default_reproduction_path: "No provider credentials are needed for table reproduction."
   optional_reruns: "Enable a provider only if you intend to rerun agents."
+  api_reruns: "API reruns reproduce the procedure with current provider behavior; frozen predictions reproduce exact paper tables."
+  bedrock_proxy: "Bedrock-family models are run through an OpenAI-compatible proxy exposed via OPENAI_BASE_URL."
