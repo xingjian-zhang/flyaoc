@@ -1,5 +1,8 @@
+import numpy as np
+
 from flyaoc.data import load_benchmark_records
 from flyaoc.evaluation.evaluate import aggregate_gene_results
+from flyaoc.reporting.tables import _bootstrap_intervals, _micro_values
 
 
 def test_verified_fact_denominators_match_current_benchmark() -> None:
@@ -44,9 +47,10 @@ def test_failed_or_empty_runs_contribute_zero_recall_to_micro_denominator() -> N
     ok_gene = {
         "task1_function": {
             "gt_verified_count": 2,
-            "semantic_recall_at_k": {"20": 0.5},
-            "semantic_recall_at_20": 0.5,
-            "semantic_recall_sum_at_20": 1.0,
+            "primary_k": 30,
+            "semantic_recall_at_k": {"20": 0.5, "30": 0.5},
+            "semantic_recall_at_30": 0.5,
+            "semantic_recall_sum_at_30": 1.0,
         },
         "task2_expression": {
             "gt_verified_count": 2,
@@ -64,9 +68,10 @@ def test_failed_or_empty_runs_contribute_zero_recall_to_micro_denominator() -> N
     failed_gene = {
         "task1_function": {
             "gt_verified_count": 2,
-            "semantic_recall_at_k": {"20": 0.0},
-            "semantic_recall_at_20": 0.0,
-            "semantic_recall_sum_at_20": 0.0,
+            "primary_k": 30,
+            "semantic_recall_at_k": {"20": 0.0, "30": 0.0},
+            "semantic_recall_at_30": 0.0,
+            "semantic_recall_sum_at_30": 0.0,
         },
         "task2_expression": {
             "gt_verified_count": 2,
@@ -87,6 +92,40 @@ def test_failed_or_empty_runs_contribute_zero_recall_to_micro_denominator() -> N
     assert aggregate["task1_verified_fact_count"] == 4
     assert aggregate["task2_verified_fact_count"] == 4
     assert aggregate["task3_verified_fact_count"] == 4
-    assert aggregate["task1_semantic_recall_at_20_micro"] == 0.25
+    assert aggregate["task1_semantic_recall_at_30_micro"] == 0.25
     assert aggregate["task2_anatomy_semantic_recall_at_10_micro"] == 0.5
     assert aggregate["task3_combined_exact_recall_at_20_micro"] == 0.25
+
+
+def test_bootstrap_resamples_genes_and_recomputes_micro_estimator() -> None:
+    contributions = [
+        {
+            "go_num": 1.0,
+            "go_den": 2,
+            "expr_num": 2.0,
+            "expr_den": 4,
+            "syn_num": 1,
+            "syn_den": 2,
+        },
+        {
+            "go_num": 3.0,
+            "go_den": 6,
+            "expr_num": 1.0,
+            "expr_den": 2,
+            "syn_num": 3,
+            "syn_den": 6,
+        },
+    ]
+
+    values = _micro_values(contributions)
+    intervals = _bootstrap_intervals(
+        contributions,
+        n_bootstrap=50,
+        rng=np.random.default_rng(123),
+    )
+
+    assert values["go"] == 0.5
+    assert values["expr"] == 0.5
+    assert values["syn"] == 0.5
+    assert values["avg"] == 0.5
+    assert intervals["avg"] == (0.5, 0.5)

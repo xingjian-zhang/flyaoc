@@ -31,7 +31,9 @@ paper.
 
 To reproduce the paper results, run `scripts/reproduce_tables.py`. This loads
 the released predictions from `artifacts/predictions/`, evaluates them against
-the verified labels, and writes regenerated tables to `artifacts/tables/`.
+the verified labels, and writes regenerated tables to `artifacts/tables/`,
+including bootstrap confidence intervals for the primary baseline and model
+comparisons.
 
 To evaluate a new method, produce predictions in the normalized FlyAOC
 prediction format and run the evaluator against the HF benchmark data. See
@@ -57,7 +59,7 @@ See `docs/BASELINES.md` for baseline rerun details.
 
 The paper reports micro-averaged recall over verified, corpus-grounded facts:
 
-- Task 1: GO semantic recall@20.
+- Task 1: GO semantic recall@30.
 - Task 2: anatomy semantic recall@10.
 - Task 3: synonym exact recall@20.
 

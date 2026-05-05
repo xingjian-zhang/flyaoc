@@ -599,6 +599,7 @@ dependencies = [
     { name = "goatools" },
     { name = "huggingface-hub" },
     { name = "matplotlib" },
+    { name = "numpy" },
     { name = "pytest" },
     { name = "pyyaml" },
 ]
@@ -627,6 +628,7 @@ requires-dist = [
     { name = "langgraph", marker = "extra == 'baselines'", specifier = ">=0.2" },
     { name = "matplotlib", specifier = ">=3.8.0" },
     { name = "mcp", marker = "extra == 'baselines'", specifier = ">=1.0" },
+    { name = "numpy", specifier = ">=1.26.0" },
     { name = "openai-agents", marker = "extra == 'baselines'", specifier = ">=0.1" },
     { name = "pydantic", marker = "extra == 'baselines'", specifier = ">=2.0" },
     { name = "pytest", specifier = ">=8.0.0" },

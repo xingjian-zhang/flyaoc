@@ -26,3 +26,12 @@ objects needed by evaluation.
 canonical no-API metric table. It reports primary micro metrics, secondary
 macro metrics, denominator counts, and additional recall@k columns. Failed and
 empty-output rows remain in the evaluated gene set and score zero recall.
+The primary metrics are GO semantic recall@30, anatomy semantic recall@10, and
+synonym exact recall@20.
+
+The generated `artifacts/tables/*_bootstrap_ci.csv` files cover the primary
+paper comparisons: main architecture scaling, fixed-harness Multi-Agent model
+comparison, and cross-family harness comparison. Each bootstrap sample resamples
+genes with replacement and recomputes the primary micro-averaged recall
+estimator, so the intervals quantify variation across benchmark genes rather
+than repeated provider/API runs.

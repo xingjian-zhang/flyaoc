@@ -8,6 +8,7 @@ from statistics import mean
 from typing import Any
 
 from flyaoc.data import DatasetConfig, download_dataset_file, load_benchmark_records
+from flyaoc.evaluation.constants import PRIMARY_TASK1_K, PRIMARY_TASK2_K, PRIMARY_TASK3_K
 from flyaoc.evaluation.io import read_jsonl
 from flyaoc.evaluation.ontology import AnatomySimilarity, GoSimilarity
 from flyaoc.evaluation.recall import exact_recall_at_k, recall_series, semantic_recall_at_k
@@ -16,9 +17,9 @@ from flyaoc.evaluation.recall import exact_recall_at_k, recall_series, semantic_
 @dataclass(frozen=True)
 class EvaluationConfig:
     dataset: DatasetConfig = DatasetConfig()
-    task1_k: int = 20
-    task2_k: int = 10
-    task3_k: int = 20
+    task1_k: int = PRIMARY_TASK1_K
+    task2_k: int = PRIMARY_TASK2_K
+    task3_k: int = PRIMARY_TASK3_K
     go_obo_path: Path | None = None
     anatomy_obo_path: Path | None = None
 
@@ -125,6 +126,7 @@ def evaluate_task1(
         "gt_total_count": len(gt_all),
         "gt_verified_count": len(gt_verified),
         "predicted_count": len(pred_ids),
+        "primary_k": k,
         "exact_recall_at_k": series["exact_recall_at_k"],
         "semantic_recall_at_k": series["semantic_recall_at_k"],
         f"semantic_recall_sum_at_{k}": semantic_sum_at_k,
@@ -153,6 +155,7 @@ def evaluate_task2(
         "gt_total_count": len(gt_all),
         "gt_verified_count": len(gt_verified),
         "predicted_count": len(pred_anatomy),
+        "primary_k": k,
         "anatomy_exact_recall_at_k": series["exact_recall_at_k"],
         "anatomy_semantic_recall_at_k": series["semantic_recall_at_k"],
         f"anatomy_semantic_recall_sum_at_{k}": semantic_sum_at_k,
@@ -182,6 +185,7 @@ def evaluate_task3(
         "gt_verified_combined_count": len(gt_combined),
         "predicted_fullname_count": len(pred_fullnames),
         "predicted_symbol_count": len(pred_symbols),
+        "primary_k": k,
         "combined_exact_recall_at_k": {
             str(k_value): exact_recall_at_k(
                 [_normalize_synonym(x) for x in pred_combined], gt_combined, k_value
@@ -219,41 +223,59 @@ def aggregate_gene_results(gene_results: list[dict[str, Any]]) -> dict[str, Any]
         series_key="combined_exact_recall_at_k",
         gt_count_key="gt_verified_combined_count",
     )
+    task1_k = _primary_k(gene_results, "task1_function", PRIMARY_TASK1_K)
+    task2_k = _primary_k(gene_results, "task2_expression", PRIMARY_TASK2_K)
+    task3_k = _primary_k(gene_results, "task3_synonyms", PRIMARY_TASK3_K)
     return {
         "task1_verified_fact_count": task1_gt,
         "task2_verified_fact_count": task2_gt,
         "task3_verified_fact_count": task3_gt,
+        "task1_primary_k": task1_k,
+        "task2_primary_k": task2_k,
+        "task3_primary_k": task3_k,
         "task1_semantic_recall_at_k_micro": task1_semantic_at_k["micro"],
         "task1_semantic_recall_at_k_macro": task1_semantic_at_k["macro"],
         "task2_anatomy_semantic_recall_at_k_micro": task2_semantic_at_k["micro"],
         "task2_anatomy_semantic_recall_at_k_macro": task2_semantic_at_k["macro"],
         "task3_combined_exact_recall_at_k_micro": task3_exact_at_k["micro"],
         "task3_combined_exact_recall_at_k_macro": task3_exact_at_k["macro"],
-        "task1_semantic_recall_at_20_micro": _safe_divide(
-            sum(row["task1_function"]["semantic_recall_sum_at_20"] for row in gene_results),
+        f"task1_semantic_recall_at_{task1_k}_micro": _safe_divide(
+            sum(
+                row["task1_function"][f"semantic_recall_sum_at_{task1_k}"]
+                for row in gene_results
+            ),
             task1_gt,
         ),
-        "task2_anatomy_semantic_recall_at_10_micro": _safe_divide(
+        f"task2_anatomy_semantic_recall_at_{task2_k}_micro": _safe_divide(
             sum(
-                row["task2_expression"]["anatomy_semantic_recall_sum_at_10"]
+                row["task2_expression"][f"anatomy_semantic_recall_sum_at_{task2_k}"]
                 for row in gene_results
             ),
             task2_gt,
         ),
-        "task3_combined_exact_recall_at_20_micro": _safe_divide(
-            sum(row["task3_synonyms"]["combined_exact_hits_at_20"] for row in gene_results),
+        f"task3_combined_exact_recall_at_{task3_k}_micro": _safe_divide(
+            sum(
+                row["task3_synonyms"][f"combined_exact_hits_at_{task3_k}"]
+                for row in gene_results
+            ),
             task3_gt,
         ),
-        "task1_semantic_recall_at_20_macro": mean(
-            row["task1_function"]["semantic_recall_at_20"] for row in gene_results
+        f"task1_semantic_recall_at_{task1_k}_macro": mean(
+            row["task1_function"][f"semantic_recall_at_{task1_k}"] for row in gene_results
         ),
-        "task2_anatomy_semantic_recall_at_10_macro": mean(
-            row["task2_expression"]["anatomy_semantic_recall_at_10"] for row in gene_results
+        f"task2_anatomy_semantic_recall_at_{task2_k}_macro": mean(
+            row["task2_expression"][f"anatomy_semantic_recall_at_{task2_k}"]
+            for row in gene_results
         ),
-        "task3_combined_exact_recall_at_20_macro": mean(
-            row["task3_synonyms"]["combined_exact_recall_at_20"] for row in gene_results
+        f"task3_combined_exact_recall_at_{task3_k}_macro": mean(
+            row["task3_synonyms"][f"combined_exact_recall_at_{task3_k}"]
+            for row in gene_results
         ),
     }
+
+
+def _primary_k(gene_results: list[dict[str, Any]], task_key: str, default: int) -> int:
+    return int(gene_results[0][task_key].get("primary_k", default))
 
 
 def _aggregate_recall_at_k(

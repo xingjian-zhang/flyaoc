@@ -1,0 +1,309 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "citeAs": "cr:citeAs",
+    "column": "cr:column",
+    "conformsTo": "dct:conformsTo",
+    "cr": "http://mlcommons.org/croissant/",
+    "data": {
+      "@id": "cr:data",
+      "@type": "@json"
+    },
+    "dataType": {
+      "@id": "cr:dataType",
+      "@type": "@vocab"
+    },
+    "dct": "http://purl.org/dc/terms/",
+    "equivalentProperty": "cr:equivalentProperty",
+    "examples": "cr:examples",
+    "extract": "cr:extract",
+    "field": "cr:field",
+    "fileObject": "cr:fileObject",
+    "fileProperty": "cr:fileProperty",
+    "fileSet": "cr:fileSet",
+    "format": "cr:format",
+    "includes": "cr:includes",
+    "isLiveDataset": "cr:isLiveDataset",
+    "jsonPath": "cr:jsonPath",
+    "key": "cr:key",
+    "md5": "cr:md5",
+    "parentField": "cr:parentField",
+    "path": "cr:path",
+    "recordSet": "cr:recordSet",
+    "references": "cr:references",
+    "regex": "cr:regex",
+    "repeated": "cr:repeated",
+    "replace": "cr:replace",
+    "samplingRate": "cr:samplingRate",
+    "sc": "https://schema.org/",
+    "separator": "cr:separator",
+    "source": "cr:source",
+    "subField": "cr:subField",
+    "transform": "cr:transform",
+    "rai": "http://mlcommons.org/croissant/RAI/",
+    "prov": "http://www.w3.org/ns/prov#"
+  },
+  "@type": "sc:Dataset",
+  "name": "FlyAOC: Agentic Ontology Curation Benchmark",
+  "description": "A benchmark for evaluating AI agents on end-to-end ontology curation from a corpus of Drosophila full-text scientific articles.",
+  "url": "https://huggingface.co/datasets/anonymous-042/flyaoc",
+  "sameAs": "https://github.com/anonymous-flyaoc/flyaoc",
+  "citeAs": "FlyAOC: Agentic Ontology Curation Benchmark. NeurIPS 2026 Evaluations and Datasets Track submission.",
+  "datePublished": "2026-04-30",
+  "version": "1.0.0",
+  "conformsTo": "http://mlcommons.org/croissant/1.1",
+  "license": [
+    "https://creativecommons.org/licenses/by/4.0/",
+    "Article-level PMC-OA licenses vary; see pmc_license_manifest.jsonl."
+  ],
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "corpus-jsonl",
+      "name": "corpus.jsonl",
+      "contentUrl": "corpus.jsonl",
+      "encodingFormat": "application/jsonlines",
+      "sha256": "8b7236a3dba5578b3f8f29c06d42bd4a8d36b1b8985324b257d64102698af8d8"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "pmc-license-manifest-jsonl",
+      "name": "pmc_license_manifest.jsonl",
+      "contentUrl": "pmc_license_manifest.jsonl",
+      "encodingFormat": "application/jsonlines",
+      "sha256": "a0e6daca2986fe7ca3eef30bec5bce9225fc70f81fde36493c180fccf036cc9d"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "benchmark-jsonl",
+      "name": "benchmark.jsonl",
+      "contentUrl": "benchmark.jsonl",
+      "encodingFormat": "application/jsonlines",
+      "sha256": "a27e5f2dd9f65678de01366649c2d657195704a9ebc42eea020c44a84f9e2c9a"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "hidden-ground-truth-jsonl",
+      "name": "ground_truth_hidden.jsonl",
+      "contentUrl": "ground_truth_hidden.jsonl",
+      "encodingFormat": "application/jsonlines",
+      "sha256": "576395b1aafa47cc499ca5a0e4c82dfe9d567f0dac8d795f022b820b222cbab4"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "hidden-go-terms-json",
+      "name": "hidden_go_terms.json",
+      "contentUrl": "hidden_go_terms.json",
+      "encodingFormat": "application/json",
+      "sha256": "26a4ead741351b96303d81316235a8edd775565a757e8f64ae0b39a0efa7d936"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "go-basic-obo",
+      "name": "ontologies/go-basic.obo",
+      "contentUrl": "ontologies/go-basic.obo",
+      "encodingFormat": "text/obo",
+      "sha256": "4e3ce039a6ad3d45e2752097625330152cc8ae97d35d824c7fcb0735b45d0fc3"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "fly-anatomy-obo",
+      "name": "ontologies/fly_anatomy.obo",
+      "contentUrl": "ontologies/fly_anatomy.obo",
+      "encodingFormat": "text/obo",
+      "sha256": "50cbbc694414f765b2cae8b27984fc96e0627774e2e1e55e02197259e292f2be"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "fly-development-obo",
+      "name": "ontologies/fly_development.obo",
+      "contentUrl": "ontologies/fly_development.obo",
+      "encodingFormat": "text/obo",
+      "sha256": "6f9803cc02a3bf8fe843cdc66d8af08de3cd6f71f87337b9acbaaa6f085fa686"
+    }
+  ],
+  "recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "@id": "corpus-records",
+      "name": "Literature corpus records",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "corpus-records/pmcid",
+          "name": "pmcid",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "corpus-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.pmcid"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "corpus-records/title",
+          "name": "title",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "corpus-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.title"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "corpus-records/abstract",
+          "name": "abstract",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "corpus-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.abstract"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "corpus-records/sections",
+          "name": "sections",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "corpus-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.sections"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "benchmark-records",
+      "name": "Benchmark gene records with verified ground truth",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark-records/gene_id",
+          "name": "gene_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "benchmark-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.gene_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark-records/gene_symbol",
+          "name": "gene_symbol",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "benchmark-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.gene_symbol"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark-records/summary",
+          "name": "summary",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "benchmark-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.summary"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark-records/pmcids",
+          "name": "pmcids",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "benchmark-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.pmcids"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark-records/task1_function",
+          "name": "task1_function",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "benchmark-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.task1_function"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark-records/task2_expression",
+          "name": "task2_expression",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "benchmark-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.task2_expression"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark-records/task3_synonyms",
+          "name": "task3_synonyms",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "benchmark-jsonl"
+            },
+            "extract": {
+              "jsonPath": "$.task3_synonyms"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "rai:dataLimitations": "FlyAOC covers 100 well-studied Drosophila genes and PMC-OA full-text literature. It does not cover all genes, all organisms, paywalled papers, non-English literature, unpublished evidence, or every valid biological annotation.",
+  "rai:dataBiases": "The corpus reflects publication and open-access biases, with overrepresentation of English-language, well-studied, and PMC-indexed literature. FlyBase-derived labels reflect expert curation priorities and may lag recent publications.",
+  "rai:personalSensitiveInformation": "The dataset is composed of scientific articles and biological database annotations. It is not designed to include human-subject records or private personal information, though source articles may contain public author names and affiliations.",
+  "rai:dataUseCases": "The dataset is intended to evaluate retrieval-augmented and agentic systems for ontology-grounded literature curation. It is not intended as a stand-alone source of validated biological annotations for production databases without expert review.",
+  "rai:dataSocialImpact": "The dataset can support research on curator-assistive systems for biological databases. Risks include over-trusting automated annotations or deploying systems without professional curator oversight.",
+  "rai:hasSyntheticData": false,
+  "prov:wasDerivedFrom": [
+    "https://www.ncbi.nlm.nih.gov/pmc/tools/openftlist/",
+    "https://flybase.org/",
+    "http://geneontology.org/",
+    "https://obofoundry.org/"
+  ],
+  "prov:wasGeneratedBy": "PMC-OA articles were retrieved through the BioC-PMC API and converted to JSONL. FlyBase release FB2025_04 annotations were processed into three benchmark tasks, annotated with corpus-grounding labels, and merged with gene summaries and gene-to-paper mappings into benchmark.jsonl. Gene Ontology and FlyBase ontology source files were included to fix the controlled vocabularies used by the benchmark tools and semantic evaluation. A hidden-term variant marks selected GO labels for specificity-gap evaluation."
+}

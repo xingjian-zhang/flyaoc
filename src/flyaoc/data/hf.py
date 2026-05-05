@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -28,23 +29,16 @@ def load_benchmark_records(
     """Load benchmark records from the anonymous HF dataset."""
 
     cfg = config or DatasetConfig()
-    try:
-        from datasets import load_dataset
-    except ImportError as exc:  # pragma: no cover - exercised by environment setup
-        raise RuntimeError("Install dependencies with `uv sync` before loading HF data.") from exc
+    if streaming:
+        raise ValueError("Streaming benchmark records is not supported for local JSONL loading.")
 
-    dataset = load_dataset(
-        cfg.dataset_id,
-        data_files=cfg.benchmark_file,
-        split="train",
-        streaming=streaming,
-    )
-
+    benchmark_path = download_dataset_file(cfg.benchmark_file, cfg)
     records: list[dict[str, Any]] = []
-    for row in dataset:
-        records.append(dict(row))
-        if limit is not None and len(records) >= limit:
-            break
+    with benchmark_path.open() as handle:
+        for line in handle:
+            records.append(json.loads(line))
+            if limit is not None and len(records) >= limit:
+                break
     return records
 
 
@@ -62,10 +56,14 @@ def download_dataset_file(
     except ImportError as exc:  # pragma: no cover - exercised by environment setup
         raise RuntimeError("Install dependencies with `uv sync` before downloading HF files.") from exc
 
-    downloaded = hf_hub_download(
-        repo_id=cfg.dataset_id,
-        repo_type="dataset",
-        filename=path,
-        cache_dir=str(cache_dir) if cache_dir is not None else None,
-    )
+    kwargs = {
+        "repo_id": cfg.dataset_id,
+        "repo_type": "dataset",
+        "filename": path,
+        "cache_dir": str(cache_dir) if cache_dir is not None else None,
+    }
+    try:
+        downloaded = hf_hub_download(**kwargs, local_files_only=True)
+    except Exception:
+        downloaded = hf_hub_download(**kwargs)
     return Path(downloaded)

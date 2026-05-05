@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from flyaoc.evaluation.constants import RECALL_K_VALUES
 
-DEFAULT_K_VALUES = [1, 3, 5, 10, 20, 50]
+DEFAULT_K_VALUES = RECALL_K_VALUES
 
 
 def exact_recall_at_k(predictions: list[str], ground_truth: set[str], k: int) -> float:

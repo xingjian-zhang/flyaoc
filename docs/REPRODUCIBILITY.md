@@ -17,7 +17,7 @@ then recomputes verified-label metrics.
 
 The canonical paper metrics are micro-averaged over deduplicated verified facts:
 
-- Task 1: GO semantic recall@20.
+- Task 1: GO semantic recall@30.
 - Task 2: anatomy semantic recall@10.
 - Task 3: synonym exact recall@20.
 
