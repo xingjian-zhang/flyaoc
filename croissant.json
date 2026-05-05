@@ -45,13 +45,14 @@
     "prov": "http://www.w3.org/ns/prov#"
   },
   "@type": "sc:Dataset",
-  "name": "FlyAOC: Agentic Ontology Curation Benchmark",
-  "description": "A benchmark for evaluating AI agents on end-to-end ontology curation from a corpus of Drosophila full-text scientific articles.",
-  "url": "https://huggingface.co/datasets/anonymous-042/flyaoc",
-  "sameAs": "https://github.com/anonymous-flyaoc/flyaoc",
+  "sc:name": "FlyAOC: Agentic Ontology Curation Benchmark",
+  "sc:description": "A benchmark for evaluating AI agents on end-to-end ontology curation from a corpus of Drosophila full-text scientific articles.",
+  "sc:url": "https://huggingface.co/datasets/anonymous-042/flyaoc",
+  "sc:sameAs": "https://github.com/anonymous-flyaoc/flyaoc",
   "citeAs": "FlyAOC: Agentic Ontology Curation Benchmark. NeurIPS 2026 Evaluations and Datasets Track submission.",
-  "datePublished": "2026-04-30",
-  "version": "1.0.0",
+  "sc:citation": "FlyAOC: Agentic Ontology Curation Benchmark. NeurIPS 2026 Evaluations and Datasets Track submission.",
+  "sc:datePublished": "2026-04-30",
+  "sc:version": "1.0.0",
   "conformsTo": "http://mlcommons.org/croissant/1.1",
   "license": [
     "https://creativecommons.org/licenses/by/4.0/",
@@ -61,7 +62,7 @@
     {
       "@type": "cr:FileObject",
       "@id": "corpus-jsonl",
-      "name": "corpus.jsonl",
+      "sc:name": "corpus.jsonl",
       "contentUrl": "corpus.jsonl",
       "encodingFormat": "application/jsonlines",
       "sha256": "8b7236a3dba5578b3f8f29c06d42bd4a8d36b1b8985324b257d64102698af8d8"
@@ -69,7 +70,7 @@
     {
       "@type": "cr:FileObject",
       "@id": "pmc-license-manifest-jsonl",
-      "name": "pmc_license_manifest.jsonl",
+      "sc:name": "pmc_license_manifest.jsonl",
       "contentUrl": "pmc_license_manifest.jsonl",
       "encodingFormat": "application/jsonlines",
       "sha256": "a0e6daca2986fe7ca3eef30bec5bce9225fc70f81fde36493c180fccf036cc9d"
@@ -77,7 +78,7 @@
     {
       "@type": "cr:FileObject",
       "@id": "benchmark-jsonl",
-      "name": "benchmark.jsonl",
+      "sc:name": "benchmark.jsonl",
       "contentUrl": "benchmark.jsonl",
       "encodingFormat": "application/jsonlines",
       "sha256": "a27e5f2dd9f65678de01366649c2d657195704a9ebc42eea020c44a84f9e2c9a"
@@ -85,7 +86,7 @@
     {
       "@type": "cr:FileObject",
       "@id": "hidden-ground-truth-jsonl",
-      "name": "ground_truth_hidden.jsonl",
+      "sc:name": "ground_truth_hidden.jsonl",
       "contentUrl": "ground_truth_hidden.jsonl",
       "encodingFormat": "application/jsonlines",
       "sha256": "576395b1aafa47cc499ca5a0e4c82dfe9d567f0dac8d795f022b820b222cbab4"
@@ -93,7 +94,7 @@
     {
       "@type": "cr:FileObject",
       "@id": "hidden-go-terms-json",
-      "name": "hidden_go_terms.json",
+      "sc:name": "hidden_go_terms.json",
       "contentUrl": "hidden_go_terms.json",
       "encodingFormat": "application/json",
       "sha256": "26a4ead741351b96303d81316235a8edd775565a757e8f64ae0b39a0efa7d936"
@@ -101,7 +102,7 @@
     {
       "@type": "cr:FileObject",
       "@id": "go-basic-obo",
-      "name": "ontologies/go-basic.obo",
+      "sc:name": "ontologies/go-basic.obo",
       "contentUrl": "ontologies/go-basic.obo",
       "encodingFormat": "text/obo",
       "sha256": "4e3ce039a6ad3d45e2752097625330152cc8ae97d35d824c7fcb0735b45d0fc3"
@@ -109,7 +110,7 @@
     {
       "@type": "cr:FileObject",
       "@id": "fly-anatomy-obo",
-      "name": "ontologies/fly_anatomy.obo",
+      "sc:name": "ontologies/fly_anatomy.obo",
       "contentUrl": "ontologies/fly_anatomy.obo",
       "encodingFormat": "text/obo",
       "sha256": "50cbbc694414f765b2cae8b27984fc96e0627774e2e1e55e02197259e292f2be"
@@ -117,7 +118,7 @@
     {
       "@type": "cr:FileObject",
       "@id": "fly-development-obo",
-      "name": "ontologies/fly_development.obo",
+      "sc:name": "ontologies/fly_development.obo",
       "contentUrl": "ontologies/fly_development.obo",
       "encodingFormat": "text/obo",
       "sha256": "6f9803cc02a3bf8fe843cdc66d8af08de3cd6f71f87337b9acbaaa6f085fa686"
@@ -127,12 +128,12 @@
     {
       "@type": "cr:RecordSet",
       "@id": "corpus-records",
-      "name": "Literature corpus records",
+      "sc:name": "Literature corpus records",
       "field": [
         {
           "@type": "cr:Field",
           "@id": "corpus-records/pmcid",
-          "name": "pmcid",
+          "sc:name": "pmcid",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -146,7 +147,7 @@
         {
           "@type": "cr:Field",
           "@id": "corpus-records/title",
-          "name": "title",
+          "sc:name": "title",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -160,7 +161,7 @@
         {
           "@type": "cr:Field",
           "@id": "corpus-records/abstract",
-          "name": "abstract",
+          "sc:name": "abstract",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -174,7 +175,7 @@
         {
           "@type": "cr:Field",
           "@id": "corpus-records/sections",
-          "name": "sections",
+          "sc:name": "sections",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -190,12 +191,12 @@
     {
       "@type": "cr:RecordSet",
       "@id": "benchmark-records",
-      "name": "Benchmark gene records with verified ground truth",
+      "sc:name": "Benchmark gene records with verified ground truth",
       "field": [
         {
           "@type": "cr:Field",
           "@id": "benchmark-records/gene_id",
-          "name": "gene_id",
+          "sc:name": "gene_id",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -209,7 +210,7 @@
         {
           "@type": "cr:Field",
           "@id": "benchmark-records/gene_symbol",
-          "name": "gene_symbol",
+          "sc:name": "gene_symbol",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -223,7 +224,7 @@
         {
           "@type": "cr:Field",
           "@id": "benchmark-records/summary",
-          "name": "summary",
+          "sc:name": "summary",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -237,7 +238,7 @@
         {
           "@type": "cr:Field",
           "@id": "benchmark-records/pmcids",
-          "name": "pmcids",
+          "sc:name": "pmcids",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -251,7 +252,7 @@
         {
           "@type": "cr:Field",
           "@id": "benchmark-records/task1_function",
-          "name": "task1_function",
+          "sc:name": "task1_function",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -265,7 +266,7 @@
         {
           "@type": "cr:Field",
           "@id": "benchmark-records/task2_expression",
-          "name": "task2_expression",
+          "sc:name": "task2_expression",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
@@ -279,7 +280,7 @@
         {
           "@type": "cr:Field",
           "@id": "benchmark-records/task3_synonyms",
-          "name": "task3_synonyms",
+          "sc:name": "task3_synonyms",
           "dataType": "sc:Text",
           "source": {
             "fileObject": {
